@@ -1,9 +1,11 @@
 # Air Quality Monitor
 
+[![CI](https://github.com/gabryel85/air-quality-monitor/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gabryel85/air-quality-monitor/actions/workflows/ci.yml)
+
 > Frontend recruitment task — air quality measurement dashboard for European cities.
 > Portfolio-grade implementation: React 19 + TypeScript (max strict) + Redux Toolkit + RTK Query + Reselect + visx + Tailwind + MSW.
 
-**Live demo:** _(deploy to Vercel and paste the URL here)_
+**Live demo:** _(Vercel auto-deploys on every push to `main` — URL pasted here after first successful deploy)_
 
 ---
 

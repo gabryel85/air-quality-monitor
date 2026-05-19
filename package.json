@@ -33,5 +33,11 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md,css,html,yaml,yml}": "prettier --write"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "msw"
+    ]
   }
 }
