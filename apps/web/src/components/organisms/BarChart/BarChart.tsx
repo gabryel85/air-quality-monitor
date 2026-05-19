@@ -35,14 +35,26 @@ export interface BarChartProps {
   readonly data: readonly BarDatum[];
   /** Axis label shown left of the Y axis (e.g. "NO₂ max"). */
   readonly yAxisLabel?: string;
-  /** Height in px. Width is responsive. */
+  /**
+   * Height in px. Defaults to responsive heights via Tailwind:
+   * 200px on `<sm`, 280px on `sm+`. Pass an explicit number to override.
+   */
   readonly height?: number;
   readonly className?: string;
   /** Locale-aware value formatter (e.g. for unit suffix). */
   readonly formatValue?: (value: number) => string;
 }
 
-const MARGIN = { top: 16, right: 8, bottom: 56, left: 56 };
+/** Margins for SVG axes. Tighter on narrow viewports to give bars more room. */
+function getMargin(width: number): { top: number; right: number; bottom: number; left: number } {
+  const narrow = width < 480;
+  return {
+    top: 12,
+    right: 8,
+    bottom: narrow ? 48 : 56,
+    left: narrow ? 38 : 56,
+  };
+}
 
 const TOOLTIP_STYLES: CSSProperties = {
   ...defaultStyles,
@@ -59,7 +71,7 @@ const TOOLTIP_STYLES: CSSProperties = {
 export function BarChart({
   data,
   yAxisLabel,
-  height = 280,
+  height,
   className,
   formatValue = (v) => v.toFixed(2),
 }: BarChartProps) {
@@ -97,9 +109,11 @@ export function BarChart({
       className={cn(
         'border-border-subtle bg-surface rounded-lg border p-3',
         'overflow-hidden',
+        /* Responsive default; overridden by explicit `height` prop if set */
+        height === undefined && 'h-[220px] sm:h-[280px]',
         className,
       )}
-      style={{ height }}
+      style={height !== undefined ? { height } : undefined}
     >
       {summary}
       <ParentSize>
@@ -129,8 +143,9 @@ function BarChartCanvas({ data, width, height, formatValue, yAxisLabel }: BarCha
   const { tooltipOpen, tooltipLeft, tooltipTop, tooltipData, hideTooltip, showTooltip } =
     useTooltip<{ label: string; value: number | null }>();
 
-  const innerWidth = width - MARGIN.left - MARGIN.right;
-  const innerHeight = height - MARGIN.top - MARGIN.bottom;
+  const margin = getMargin(width);
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
 
   const xScale = useMemo(
     () =>
@@ -164,7 +179,7 @@ function BarChartCanvas({ data, width, height, formatValue, yAxisLabel }: BarCha
   return (
     <>
       <svg width={width} height={height} aria-hidden="true">
-        <Group left={MARGIN.left} top={MARGIN.top}>
+        <Group left={margin.left} top={margin.top}>
           {/* Horizontal grid lines */}
           {yScale.ticks(4).map((tick) => (
             <line

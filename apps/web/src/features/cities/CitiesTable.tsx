@@ -3,8 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { CityCard } from '@/components/organisms/CityCard';
 import { DataTable, type ColumnDef } from '@/components/organisms/DataTable';
 import type { SortConfig } from '@/lib/sort';
+import { cn } from '@/lib/utils';
 
 import type { CityStatsRow } from './citiesApi';
 import { selectSortedCities, selectSortConfig } from './selectors';
@@ -24,33 +26,10 @@ export function CitiesTable({ className }: CitiesTableProps) {
 
   const columns = useMemo<ReadonlyArray<ColumnDef<CityStatsRow, SortableColumn>>>(
     () => [
-      {
-        id: 'city',
-        header: t('labels.city'),
-        accessor: (r) => r.city,
-        sortable: true,
-      },
-      {
-        id: 'maxNO2',
-        header: 'NO₂',
-        accessor: (r) => r.maxNO2,
-        sortable: true,
-        numeric: true,
-      },
-      {
-        id: 'maxCO',
-        header: 'CO',
-        accessor: (r) => r.maxCO,
-        sortable: true,
-        numeric: true,
-      },
-      {
-        id: 'maxPM10',
-        header: 'PM₁₀',
-        accessor: (r) => r.maxPM10,
-        sortable: true,
-        numeric: true,
-      },
+      { id: 'city', header: t('labels.city'), accessor: (r) => r.city, sortable: true },
+      { id: 'maxNO2', header: 'NO₂', accessor: (r) => r.maxNO2, sortable: true, numeric: true },
+      { id: 'maxCO', header: 'CO', accessor: (r) => r.maxCO, sortable: true, numeric: true },
+      { id: 'maxPM10', header: 'PM₁₀', accessor: (r) => r.maxPM10, sortable: true, numeric: true },
     ],
     [t],
   );
@@ -62,26 +41,46 @@ export function CitiesTable({ className }: CitiesTableProps) {
     [dispatch],
   );
 
-  const handleRowClick = useCallback(
-    (row: CityStatsRow) => {
-      navigate(`/cities/${encodeURIComponent(row.cityId)}/notes`);
+  const openNotes = useCallback(
+    (cityId: string) => {
+      navigate(`/cities/${encodeURIComponent(cityId)}/notes`);
     },
     [navigate],
   );
 
   return (
-    <DataTable<CityStatsRow, SortableColumn>
-      columns={columns}
-      rows={rows}
-      rowKey={(r) => r.cityId}
-      sort={sort}
-      onSortChange={handleSortChange}
-      defaultSortColumn={DEFAULT_SORT.column}
-      onRowClick={handleRowClick}
-      caption={t('app.title')}
-      testId="cities-table"
-      skipSort
-      {...(className !== undefined ? { className } : {})}
-    />
+    <>
+      {/* Desktop / tablet: full sortable table */}
+      <div className={cn('hidden sm:block', className)}>
+        <DataTable<CityStatsRow, SortableColumn>
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.cityId}
+          sort={sort}
+          onSortChange={handleSortChange}
+          defaultSortColumn={DEFAULT_SORT.column}
+          onRowClick={(row) => {
+            openNotes(row.cityId);
+          }}
+          caption={t('app.title')}
+          testId="cities-table"
+          skipSort
+        />
+      </div>
+
+      {/* Mobile: tappable cards. Sort isn't exposed here yet (sort is a
+          desktop power-user feature; mobile uses default + filter). */}
+      <ul
+        className={cn('flex flex-col gap-2 sm:hidden', className)}
+        aria-label={t('app.title')}
+        data-testid="cities-cards"
+      >
+        {rows.map((row) => (
+          <li key={row.cityId}>
+            <CityCard row={row} onOpen={openNotes} />
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }

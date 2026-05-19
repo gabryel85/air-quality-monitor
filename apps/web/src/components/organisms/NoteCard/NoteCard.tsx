@@ -69,12 +69,12 @@ export function NoteCard({ note, onOpenDetails, onEdit, className }: NoteCardPro
       </button>
 
       <header className="pointer-events-none relative z-10 flex items-start justify-between gap-3">
-        <h3
+        <h2
           className="text-ink-primary min-w-0 flex-1 truncate text-base font-semibold"
           title={note.title}
         >
           {note.title}
-        </h3>
+        </h2>
         <div className="pointer-events-auto flex shrink-0 items-center gap-1">
           <Button
             variant="ghost"
