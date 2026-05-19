@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "pnpm --filter @aqm/web build",
   "outputDirectory": "apps/web/dist",
-  "installCommand": "pnpm install --frozen-lockfile",
+  "installCommand": "pnpm install --frozen-lockfile --ignore-scripts && pnpm rebuild esbuild msw",
   "framework": null,
   "rewrites": [
     {
