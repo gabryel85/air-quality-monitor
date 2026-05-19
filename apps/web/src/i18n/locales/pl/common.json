@@ -9,7 +9,10 @@
     "close": "Zamknij",
     "retry": "Spróbuj ponownie",
     "refresh": "Odśwież",
-    "clearFilter": "Wyczyść filtr"
+    "clearFilter": "Wyczyść filtr",
+    "details": "Szczegóły",
+    "edit": "Edytuj",
+    "newNote": "Nowa notatka"
   },
   "labels": {
     "country": "Kraj",
@@ -17,7 +20,11 @@
     "city": "Miasto",
     "filter": "Filtr",
     "live": "Aktywne",
-    "updatedAgo": "zaktualizowano {{value}}"
+    "updatedAgo": "zaktualizowano {{value}}",
+    "created": "Utworzono",
+    "updated": "Zmodyfikowano",
+    "title": "Tytuł",
+    "content": "Treść"
   },
   "states": {
     "loading": "Ładowanie danych…",

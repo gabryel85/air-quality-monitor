@@ -9,7 +9,10 @@
     "close": "Close",
     "retry": "Try again",
     "refresh": "Refresh",
-    "clearFilter": "Clear filter"
+    "clearFilter": "Clear filter",
+    "details": "Details",
+    "edit": "Edit",
+    "newNote": "New note"
   },
   "labels": {
     "country": "Country",
@@ -17,7 +20,11 @@
     "city": "City",
     "filter": "Filter",
     "live": "Live",
-    "updatedAgo": "updated {{value}}"
+    "updatedAgo": "updated {{value}}",
+    "created": "Created",
+    "updated": "Updated",
+    "title": "Title",
+    "content": "Content"
   },
   "states": {
     "loading": "Loading data…",
