@@ -21,6 +21,8 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css,html}\"",
     "typecheck": "pnpm -r typecheck",
     "storybook": "pnpm --filter @aqm/web storybook",
+    "deploy": "vercel --prod",
+    "deploy:preview": "vercel",
     "prepare": "husky"
   },
   "devDependencies": {

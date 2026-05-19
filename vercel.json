@@ -1,0 +1,26 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm --filter @aqm/web build",
+  "outputDirectory": "apps/web/dist",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/((?!api|_next|mockServiceWorker.js|assets|favicon.ico|favicon.svg|icons.svg).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/mockServiceWorker.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/" },
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ]
+}
