@@ -9,17 +9,19 @@ describe('serializeUrlState', () => {
         country: null,
         year: null,
         q: '',
+        mode: 'contains',
         sort: { column: 'city', direction: 'asc' },
       }),
     ).toBe('');
   });
 
-  it('omits default sort from the URL', () => {
+  it('omits default sort and default mode from the URL', () => {
     expect(
       serializeUrlState({
         country: 'PL',
         year: 2025,
         q: '',
+        mode: 'contains',
         sort: { column: 'city', direction: 'asc' },
       }),
     ).toBe('?country=PL&year=2025');
@@ -31,9 +33,22 @@ describe('serializeUrlState', () => {
         country: 'PL',
         year: 2025,
         q: '',
+        mode: 'contains',
         sort: { column: 'maxNO2', direction: 'desc' },
       }),
     ).toBe('?country=PL&sort=maxNO2%3Adesc&year=2025');
+  });
+
+  it('includes non-default filter mode', () => {
+    expect(
+      serializeUrlState({
+        country: 'PL',
+        year: 2025,
+        q: 'krak',
+        mode: 'exact',
+        sort: { column: 'city', direction: 'asc' },
+      }),
+    ).toBe('?country=PL&mode=exact&q=krak&year=2025');
   });
 
   it('includes city filter when non-empty', () => {
@@ -42,6 +57,7 @@ describe('serializeUrlState', () => {
         country: 'PL',
         year: 2025,
         q: 'warsz',
+        mode: 'contains',
         sort: { column: 'city', direction: 'asc' },
       }),
     ).toBe('?country=PL&q=warsz&year=2025');
@@ -52,12 +68,14 @@ describe('serializeUrlState', () => {
       country: 'PL',
       year: 2025,
       q: 'a',
+      mode: 'contains',
       sort: { column: 'maxCO', direction: 'desc' },
     });
     const b = serializeUrlState({
       year: 2025,
       country: 'PL',
       q: 'a',
+      mode: 'contains',
       sort: { column: 'maxCO', direction: 'desc' },
     });
     expect(a).toBe(b);
@@ -66,11 +84,12 @@ describe('serializeUrlState', () => {
 
 describe('parseUrlState', () => {
   it('parses a complete URL', () => {
-    const params = new URLSearchParams('country=PL&year=2025&q=warsz&sort=maxNO2:desc');
+    const params = new URLSearchParams('country=PL&year=2025&q=warsz&mode=exact&sort=maxNO2:desc');
     expect(parseUrlState(params)).toEqual({
       country: 'PL',
       year: 2025,
       q: 'warsz',
+      mode: 'exact',
       sort: { column: 'maxNO2', direction: 'desc' },
     });
   });
@@ -95,6 +114,11 @@ describe('parseUrlState', () => {
     expect(parseUrlState(params)).toEqual({});
   });
 
+  it('silently drops invalid filter mode', () => {
+    const params = new URLSearchParams('mode=fuzzy');
+    expect(parseUrlState(params)).toEqual({});
+  });
+
   it('accepts empty q (signals "clear filter")', () => {
     const params = new URLSearchParams('q=');
     expect(parseUrlState(params)).toEqual({ q: '' });
@@ -102,11 +126,12 @@ describe('parseUrlState', () => {
 });
 
 describe('round-trip: parse(serialize(x)) reflects x', () => {
-  it('country+year+q+sort survive the round trip', () => {
+  it('country+year+q+mode+sort survive the round trip', () => {
     const initial = {
       country: 'PL',
       year: 2025,
       q: 'warsz',
+      mode: 'startsWith' as const,
       sort: { column: 'maxNO2' as const, direction: 'desc' as const },
     };
     const url = serializeUrlState(initial);

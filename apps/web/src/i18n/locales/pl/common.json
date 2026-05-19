@@ -24,7 +24,11 @@
     "created": "Utworzono",
     "updated": "Zmodyfikowano",
     "title": "Tytuł",
-    "content": "Treść"
+    "content": "Treść",
+    "matchMode": "Tryb",
+    "matchContains": "Zawiera",
+    "matchExact": "Dokładnie",
+    "matchStartsWith": "Zaczyna się"
   },
   "states": {
     "loading": "Ładowanie danych…",

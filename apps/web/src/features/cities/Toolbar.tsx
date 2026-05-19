@@ -7,6 +7,7 @@ import { PollingIndicator } from '@/components/molecules/PollingIndicator';
 import { CountrySelect } from '@/features/countries/CountrySelect';
 import { YearSelect } from '@/features/countries/YearSelect';
 import { CityFilterInput } from '@/features/filters/CityFilterInput';
+import { FilterModeSelect } from '@/features/filters/FilterModeSelect';
 import { cn } from '@/lib/utils';
 
 import { useGetCitiesStatsQuery } from './citiesApi';
@@ -38,6 +39,7 @@ export function Toolbar({ className }: ToolbarProps) {
   const countryFieldId = useId();
   const yearFieldId = useId();
   const filterFieldId = useId();
+  const modeFieldId = useId();
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
@@ -48,8 +50,11 @@ export function Toolbar({ className }: ToolbarProps) {
         <Field label={t('labels.year')} htmlFor={yearFieldId} className="min-w-[120px]">
           <YearSelect id={yearFieldId} />
         </Field>
-        <Field label={t('labels.filter')} htmlFor={filterFieldId} className="min-w-[240px] flex-1">
+        <Field label={t('labels.filter')} htmlFor={filterFieldId} className="min-w-[200px] flex-1">
           <CityFilterInput />
+        </Field>
+        <Field label={t('labels.matchMode')} htmlFor={modeFieldId} className="min-w-[140px]">
+          <FilterModeSelect id={modeFieldId} />
         </Field>
         <div className="ml-auto flex items-center pb-1">
           <PollingIndicator lastUpdatedAt={lastUpdatedAt} isError={Boolean(error)} />

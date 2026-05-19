@@ -10,7 +10,7 @@ import { isAnyOf, type ListenerEffectAPI, type TypedStartListening } from '@redu
 
 import type { AppDispatch, RootState } from '@/app/store';
 import { setSort } from '@/features/cities/tableSlice';
-import { setAllFromUrl, setCountry, setQ, setYear } from '@/features/filters/filtersSlice';
+import { setAllFromUrl, setCountry, setMode, setQ, setYear } from '@/features/filters/filtersSlice';
 
 import { serializeUrlState } from './urlState';
 import { writeUrl } from './urlWriter';
@@ -23,13 +23,14 @@ export type AppStartListening = TypedStartListening<RootState, AppDispatch>;
  */
 export function startFilterUrlListeners(startListening: AppStartListening): void {
   startListening({
-    matcher: isAnyOf(setCountry, setYear, setQ, setAllFromUrl, setSort),
+    matcher: isAnyOf(setCountry, setYear, setQ, setMode, setAllFromUrl, setSort),
     effect: (_action, api: ListenerEffectAPI<RootState, AppDispatch>) => {
       const state = api.getState();
       const search = serializeUrlState({
         country: state.filters.country,
         year: state.filters.year,
         q: state.filters.q,
+        mode: state.filters.mode,
         sort: state.table.sort,
       });
       writeUrl(search);

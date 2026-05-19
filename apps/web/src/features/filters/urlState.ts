@@ -12,7 +12,12 @@
 
 import type { SortableColumn, SortConfig } from '@/features/cities/tableSlice';
 import { DEFAULT_SORT } from '@/features/cities/tableSlice';
-import type { FiltersState } from './filtersSlice';
+import {
+  DEFAULT_FILTER_MODE,
+  isFilterMode,
+  type FilterMode,
+  type FiltersState,
+} from './filtersSlice';
 
 const VALID_SORTABLE: ReadonlySet<SortableColumn> = new Set(['city', 'maxNO2', 'maxCO', 'maxPM10']);
 
@@ -24,6 +29,7 @@ const PARAM = {
   country: 'country',
   year: 'year',
   q: 'q',
+  mode: 'mode',
   sort: 'sort',
 } as const;
 
@@ -37,6 +43,9 @@ export function serializeUrlState(state: UrlState): string {
   if (state.country) params.set(PARAM.country, state.country);
   if (state.year !== null) params.set(PARAM.year, String(state.year));
   if (state.q.length > 0) params.set(PARAM.q, state.q);
+  if (state.mode !== DEFAULT_FILTER_MODE) {
+    params.set(PARAM.mode, state.mode);
+  }
   if (!isDefaultSort(state.sort)) {
     params.set(PARAM.sort, `${state.sort.column}:${state.sort.direction}`);
   }
@@ -52,7 +61,13 @@ export function serializeUrlState(state: UrlState): string {
 // ============================================================
 
 export function parseUrlState(searchParams: URLSearchParams): Partial<UrlState> {
-  const out: { country?: string | null; year?: number | null; q?: string; sort?: SortConfig } = {};
+  const out: {
+    country?: string | null;
+    year?: number | null;
+    q?: string;
+    mode?: FilterMode;
+    sort?: SortConfig;
+  } = {};
 
   const country = searchParams.get(PARAM.country);
   if (country !== null && /^[A-Z]{2}$/.test(country)) {
@@ -70,6 +85,11 @@ export function parseUrlState(searchParams: URLSearchParams): Partial<UrlState> 
   const q = searchParams.get(PARAM.q);
   if (q !== null) {
     out.q = q;
+  }
+
+  const modeRaw = searchParams.get(PARAM.mode);
+  if (modeRaw !== null && isFilterMode(modeRaw)) {
+    out.mode = modeRaw;
   }
 
   const sortRaw = searchParams.get(PARAM.sort);

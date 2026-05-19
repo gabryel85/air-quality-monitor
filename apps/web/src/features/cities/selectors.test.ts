@@ -9,7 +9,7 @@ const ROWS: readonly CityStatsRow[] = [
   { cityId: 'warszawa', city: 'Warszawa', maxNO2: 16.34, maxCO: 9.87, maxPM10: null },
 ];
 
-describe('applyFilter', () => {
+describe('applyFilter — contains (default)', () => {
   it('returns all rows for empty query', () => {
     expect(applyFilter(ROWS, '')).toEqual(ROWS);
   });
@@ -28,6 +28,34 @@ describe('applyFilter', () => {
 
   it('handles Polish diacritics', () => {
     expect(applyFilter(ROWS, 'gdań').map((r) => r.cityId)).toEqual(['gdansk']);
+  });
+});
+
+describe('applyFilter — exact', () => {
+  it('matches full city name case-insensitively', () => {
+    expect(applyFilter(ROWS, 'gdańsk', 'exact').map((r) => r.cityId)).toEqual(['gdansk']);
+  });
+
+  it('rejects substring that is not the full name', () => {
+    expect(applyFilter(ROWS, 'gdań', 'exact')).toEqual([]);
+  });
+
+  it('returns empty for no match', () => {
+    expect(applyFilter(ROWS, 'paris', 'exact')).toEqual([]);
+  });
+});
+
+describe('applyFilter — startsWith', () => {
+  it('matches prefix case-insensitively', () => {
+    expect(applyFilter(ROWS, 'War', 'startsWith').map((r) => r.cityId)).toEqual(['warszawa']);
+  });
+
+  it('rejects middle-of-string match', () => {
+    expect(applyFilter(ROWS, 'kow', 'startsWith')).toEqual([]);
+  });
+
+  it('matches when query equals full name', () => {
+    expect(applyFilter(ROWS, 'Kraków', 'startsWith').map((r) => r.cityId)).toEqual(['krakow']);
   });
 });
 

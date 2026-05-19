@@ -17,6 +17,8 @@ import { QueryStatus } from '@reduxjs/toolkit/query';
 import type { RootState } from '@/app/store';
 import { sortWithNullsLast, type SortDirection } from '@/lib/sort';
 
+import type { FilterMode } from '@/features/filters/filtersSlice';
+
 import { citiesApi, type CityStatsRow } from './citiesApi';
 import type { SortableColumn } from './tableSlice';
 
@@ -58,10 +60,19 @@ const EMPTY_RESULT = {
 // Pure derivers (exported for unit tests)
 // ============================================================
 
-export function applyFilter(rows: readonly CityStatsRow[], q: string): readonly CityStatsRow[] {
+export function applyFilter(
+  rows: readonly CityStatsRow[],
+  q: string,
+  mode: FilterMode = 'contains',
+): readonly CityStatsRow[] {
   const needle = q.trim().toLowerCase();
   if (needle.length === 0) return rows;
-  return rows.filter((c) => c.city.toLowerCase().includes(needle));
+  return rows.filter((c) => {
+    const haystack = c.city.toLowerCase();
+    if (mode === 'exact') return haystack === needle;
+    if (mode === 'startsWith') return haystack.startsWith(needle);
+    return haystack.includes(needle);
+  });
 }
 
 export function applySort(
@@ -83,7 +94,7 @@ export const selectRawCities = createSelector(
 
 export const selectFilteredCities = createSelector(
   [selectRawCities, selectFiltersState],
-  (rows, filters) => applyFilter(rows, filters.q),
+  (rows, filters) => applyFilter(rows, filters.q, filters.mode),
 );
 
 export const selectSortedCities = createSelector(

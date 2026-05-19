@@ -24,7 +24,11 @@
     "created": "Created",
     "updated": "Updated",
     "title": "Title",
-    "content": "Content"
+    "content": "Content",
+    "matchMode": "Match",
+    "matchContains": "Contains",
+    "matchExact": "Exact",
+    "matchStartsWith": "Starts with"
   },
   "states": {
     "loading": "Loading data…",

@@ -61,6 +61,7 @@ export function UrlSyncProvider({ children }: { readonly children: ReactNode }) 
     if (parsed.country !== undefined) filterPatch.country = parsed.country;
     if (parsed.year !== undefined) filterPatch.year = parsed.year;
     if (parsed.q !== undefined) filterPatch.q = parsed.q;
+    if (parsed.mode !== undefined) filterPatch.mode = parsed.mode;
     if (Object.keys(filterPatch).length > 0) {
       dispatch(setAllFromUrl(filterPatch));
     }
