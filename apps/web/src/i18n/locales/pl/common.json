@@ -1,0 +1,53 @@
+{
+  "app": {
+    "title": "Monitor jakości powietrza",
+    "subtitle": "Dane pomiarowe ze stacji w wybranym kraju i roku."
+  },
+  "actions": {
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "close": "Zamknij",
+    "retry": "Spróbuj ponownie",
+    "refresh": "Odśwież",
+    "clearFilter": "Wyczyść filtr"
+  },
+  "labels": {
+    "country": "Kraj",
+    "year": "Rok",
+    "city": "Miasto",
+    "filter": "Filtr",
+    "live": "Aktywne",
+    "updatedAgo": "zaktualizowano {{value}}"
+  },
+  "states": {
+    "loading": "Ładowanie danych…",
+    "noSelection": {
+      "title": "Wybierz kraj i rok",
+      "body": "Aby zobaczyć pomiary, wybierz kraj oraz rok z menu powyżej."
+    },
+    "noData": {
+      "title": "Brak danych dla wyboru",
+      "body": "Nie ma pomiarów dla tej kombinacji kraju i roku. Spróbuj innego roku."
+    },
+    "noFilterResults": {
+      "title": "Brak wyników",
+      "body": "Żadne miasto nie pasuje do filtra."
+    },
+    "error": {
+      "title": "Nie udało się załadować danych",
+      "body": "Wystąpił błąd podczas pobierania pomiarów."
+    },
+    "sensorUnavailable": "Czujnik niedostępny"
+  },
+  "theme": {
+    "label": "Motyw",
+    "light": "Jasny",
+    "dark": "Ciemny",
+    "auto": "Automatyczny"
+  },
+  "language": {
+    "label": "Język",
+    "pl": "Polski",
+    "en": "Angielski"
+  }
+}

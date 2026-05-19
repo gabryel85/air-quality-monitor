@@ -1,0 +1,248 @@
+/* ============================================================
+ * Air Quality Monitor — Design Tokens + Tailwind base
+ * Philosophy: Functional Confidence  •  Brand: ING
+ * Themes: light (default) | dark (via .dark class on <html>)
+ *
+ * Theme switching: JavaScript bootstrap in index.html sets
+ *   <html class="dark"? data-theme="auto|light|dark">
+ * based on localStorage['theme'] and prefers-color-scheme.
+ * Fonts loaded via @fontsource in main.tsx (no CDN dependency).
+ * ============================================================ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* ----- COLOR · semantic (LIGHT) ----- */
+  --color-bg-canvas: #faf8f4;
+  --color-bg-surface: #ffffff;
+  --color-bg-subtle: #f2efe8;
+  --color-bg-muted: #e5e1d7;
+  --color-bg-inverse: #102140;
+
+  --color-text-primary: #1a1917;
+  --color-text-secondary: #585551;
+  --color-text-tertiary: #a39e91;
+  --color-text-inverse: #faf8f4;
+  --color-text-link: #1f3d75;
+  --color-text-on-accent: #ffffff;
+
+  --color-border-default: #d1cdc1;
+  --color-border-subtle: #e5e1d7;
+  --color-border-strong: #a39e91;
+  --color-border-focus: #ff6200;
+
+  --color-accent-primary: #ff6200;
+  --color-accent-primary-hover: #d24e00;
+  --color-accent-primary-active: #a33d00;
+  --color-accent-secondary: #1f3d75;
+
+  --color-status-success: #0f7b5d;
+  --color-status-warning: #b8860b;
+  --color-status-error: #c53030;
+  --color-status-info: #1f3d75;
+
+  --color-overlay: rgba(15, 13, 11, 0.5);
+  --color-skeleton: #e5e1d7;
+  --color-skeleton-highlight: #f2efe8;
+
+  /* ----- COLOR · domain aliases ----- */
+  --color-sensor-online: var(--color-status-success);
+  --color-sensor-degraded: var(--color-status-warning);
+  --color-sensor-offline: var(--color-status-error);
+  --color-chart-bar: var(--color-accent-primary);
+  --color-chart-bar-hover: var(--color-accent-primary-hover);
+  --color-chart-grid: var(--color-border-subtle);
+  --color-chart-axis: var(--color-text-tertiary);
+  --color-poll-pulse: var(--color-accent-primary);
+
+  /* ----- TYPOGRAPHY ----- */
+  --font-family-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-family-display: var(--font-family-ui);
+  --font-family-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+
+  --font-size-xs: 0.6875rem; /* 11px */
+  --font-size-sm: 0.75rem; /* 12px */
+  --font-size-base: 0.875rem; /* 14px */
+  --font-size-md: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
+  --font-size-4xl: 2.25rem; /* 36px */
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.35;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.65;
+
+  --letter-spacing-tight: -0.01em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.04em;
+
+  /* ----- LAYOUT ----- */
+  --max-width-prose: 65ch;
+  --max-width-container: 1280px;
+  --max-width-wide: 1536px;
+
+  --radius-none: 0;
+  --radius-sm: 0.25rem; /*  4px */
+  --radius-md: 0.375rem; /*  6px — default */
+  --radius-lg: 0.5rem; /*  8px */
+  --radius-xl: 0.75rem; /* 12px */
+  --radius-2xl: 1rem; /* 16px */
+  --radius-full: 9999px;
+
+  /* ----- SHADOW (light) ----- */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.06);
+  --shadow-focus: 0 0 0 3px rgba(255, 98, 0, 0.35);
+
+  /* ----- MOTION ----- */
+  --duration-instant: 50ms;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+
+  --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-in: cubic-bezier(0.4, 0, 1, 1);
+  --easing-out: cubic-bezier(0, 0, 0.2, 1);
+  --easing-emphasis: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ============================================================
+ * DARK MODE — applied when <html> has .dark class
+ * The class is set by JS bootstrap based on stored preference
+ * or system preference (when set to "auto").
+ * ============================================================ */
+
+:root.dark {
+  --color-bg-canvas: #0f0f11;
+  --color-bg-surface: #16161a;
+  --color-bg-subtle: #1f1f1d;
+  --color-bg-muted: #252522;
+  --color-bg-inverse: #faf8f4;
+
+  --color-text-primary: #e5e1d7;
+  --color-text-secondary: #a39e91;
+  --color-text-tertiary: #75716a;
+  --color-text-inverse: #1a1917;
+  --color-text-link: #ff8542;
+  --color-text-on-accent: #0f0f11;
+
+  --color-border-default: #2a2a28;
+  --color-border-subtle: #1f1f1d;
+  --color-border-strong: #3f3e3b;
+  --color-border-focus: #ff7c24;
+
+  --color-accent-primary: #ff7c24;
+  --color-accent-primary-hover: #ff8542;
+  --color-accent-primary-active: #ff6200;
+  --color-accent-secondary: #8fa4c2;
+
+  --color-status-success: #34d399;
+  --color-status-warning: #fbbf24;
+  --color-status-error: #f87171;
+  --color-status-info: #8fa4c2;
+
+  --color-overlay: rgba(0, 0, 0, 0.7);
+  --color-skeleton: #1f1f1d;
+  --color-skeleton-highlight: #2a2a28;
+
+  /* Shadows: less visible on dark; rely more on borders + bg contrast */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.6), 0 8px 16px rgba(0, 0, 0, 0.4);
+  --shadow-focus: 0 0 0 3px rgba(255, 124, 36, 0.45);
+}
+
+/* ============================================================
+ * GLOBAL DEFAULTS
+ * ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-family-ui);
+  font-size: 16px;
+  line-height: var(--line-height-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background-color: var(--color-bg-canvas);
+  color: var(--color-text-primary);
+}
+
+body {
+  margin: 0;
+  font-size: var(--font-size-base);
+  background-color: inherit;
+  color: inherit;
+  transition:
+    background-color var(--duration-normal) var(--easing-default),
+    color var(--duration-normal) var(--easing-default);
+}
+
+/* Numeric columns — tabular nums prevent jitter on sort */
+.numeric,
+[data-numeric] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Global focus ring — uniform across all interactive elements */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  border-radius: var(--radius-sm);
+}
+
+/* Selection */
+::selection {
+  background: var(--color-accent-primary);
+  color: var(--color-text-on-accent);
+}
+
+/* Scrollbar — subtle, theme-aware */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-subtle);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-bg-subtle);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}
+
+/* Reduced motion — disable all transitions */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

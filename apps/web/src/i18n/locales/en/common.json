@@ -1,0 +1,53 @@
+{
+  "app": {
+    "title": "Air Quality Monitor",
+    "subtitle": "Measurements from stations in the selected country and year."
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "retry": "Try again",
+    "refresh": "Refresh",
+    "clearFilter": "Clear filter"
+  },
+  "labels": {
+    "country": "Country",
+    "year": "Year",
+    "city": "City",
+    "filter": "Filter",
+    "live": "Live",
+    "updatedAgo": "updated {{value}}"
+  },
+  "states": {
+    "loading": "Loading data…",
+    "noSelection": {
+      "title": "Select a country and year",
+      "body": "To see measurements, pick a country and a year above."
+    },
+    "noData": {
+      "title": "No data for this selection",
+      "body": "There are no measurements for this country and year. Try a different year."
+    },
+    "noFilterResults": {
+      "title": "No matching cities",
+      "body": "Nothing matches your filter."
+    },
+    "error": {
+      "title": "Couldn't load data",
+      "body": "An error occurred while fetching measurements."
+    },
+    "sensorUnavailable": "Sensor unavailable"
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "auto": "Auto"
+  },
+  "language": {
+    "label": "Language",
+    "pl": "Polish",
+    "en": "English"
+  }
+}

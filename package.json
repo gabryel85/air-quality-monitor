@@ -1,0 +1,35 @@
+{
+  "name": "air-quality-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Air Quality Monitor — ING frontend recruitment task. Portfolio-grade implementation with React, RTK Query, Reselect, TS strict, Tailwind, MSW.",
+  "license": "UNLICENSED",
+  "author": "Paweł Gabryel <gabryel85@gmail.com>",
+  "packageManager": "pnpm@11.1.3",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @aqm/web dev",
+    "build": "pnpm --filter @aqm/web build",
+    "preview": "pnpm --filter @aqm/web preview",
+    "test": "pnpm --filter @aqm/web test",
+    "test:e2e": "pnpm --filter @aqm/web test:e2e",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css,html}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css,html}\"",
+    "typecheck": "pnpm -r typecheck",
+    "storybook": "pnpm --filter @aqm/web storybook",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.9"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,md,css,html,yaml,yml}": "prettier --write"
+  }
+}

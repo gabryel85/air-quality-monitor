@@ -1,0 +1,12 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+onlyBuiltDependencies:
+  - esbuild
+  - msw
+
+# Pin which packages are installed at the root vs per-workspace
+catalog:
+  # Shared versions used across the monorepo go here when needed
+  typescript: ^5.6.3
