@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm --filter @aqm/web build && rm -rf dist && cp -r apps/web/dist ./dist",
+  "buildCommand": "pnpm --filter @aqm/web build",
   "outputDirectory": "dist",
   "installCommand": "pnpm install --frozen-lockfile --ignore-scripts && pnpm rebuild esbuild msw",
   "framework": null,
