@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAppSelector } from '@/app/hooks';
@@ -5,9 +6,16 @@ import { TableSkeleton } from '@/components/atoms/Skeleton';
 import { BarChartSkeleton } from '@/components/atoms/Skeleton';
 import { EmptyState } from '@/components/molecules/EmptyState';
 import { ErrorState } from '@/components/molecules/ErrorState';
-import { BarChart } from '@/components/organisms/BarChart';
 import { CitiesTable } from '@/features/cities/CitiesTable';
 import { useGetCitiesStatsQuery } from '@/features/cities/citiesApi';
+
+/**
+ * Lazy BarChart so the visx tree (~70 KB gzipped) only ships when the
+ * dashboard actually renders chart data — not before, not on the notes route.
+ */
+const BarChart = lazy(() =>
+  import('@/components/organisms/BarChart').then((m) => ({ default: m.BarChart })),
+);
 import {
   selectCitiesError,
   selectCitiesLoading,
@@ -97,7 +105,9 @@ function DashboardBody({
 
   return (
     <div className="flex flex-col gap-4">
-      <BarChart data={chartData} yAxisLabel="NO₂ max" />
+      <Suspense fallback={<BarChartSkeleton />}>
+        <BarChart data={chartData} yAxisLabel="NO₂ max" />
+      </Suspense>
       <CitiesTable />
     </div>
   );

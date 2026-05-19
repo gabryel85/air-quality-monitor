@@ -218,14 +218,21 @@ In production with real costs, I'd add a Page Visibility API gate at the 5-minut
 
 ## What I'd add with more time
 
-| Area                          | What                                            | Why                                                             |
-| ----------------------------- | ----------------------------------------------- | --------------------------------------------------------------- |
-| Code-splitting                | Lazy-load `NotesPage` + visx chunk              | Current main bundle is 711 KB; getting initial < 200 KB         |
-| Integration tests             | RTL + MSW for sort/filter/polling survival flow | Already have unit tests (32 ✓); RTL would prove polling-safe UX |
-| E2E                           | One Playwright happy-path                       | Locked-in proof the full flow works                             |
-| Storybook + visual regression | Stories per component, Chromatic snapshots      | Component-driven dev demo, regression safety                    |
-| axe-core in tests             | Automated a11y assertions                       | Currently relying on jsx-a11y lint + manual keyboard testing    |
-| Real backend                  | NestJS + Postgres + Auth                        | Would extend further into the "fullstack" claim                 |
+| Area                          | What                                       | Why                                             |
+| ----------------------------- | ------------------------------------------ | ----------------------------------------------- |
+| E2E                           | One Playwright happy-path                  | Locked-in proof the full flow works             |
+| Storybook + visual regression | Stories per component, Chromatic snapshots | Component-driven dev demo, regression safety    |
+| Real backend                  | NestJS + Postgres + Auth                   | Would extend further into the "fullstack" claim |
+
+### ✅ Already done
+
+| Area              | What                                                                                                                         |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Code-splitting    | Lazy `NotesPage` + lazy `BarChart` + manual vendor chunks. Initial ~220 KB gz across cacheable chunks (was 226 KB monolith). |
+| Integration tests | RTL + MSW: sort cycle, filter-survives-refetch, note creation flow.                                                          |
+| axe-core in tests | Automated a11y assertions on `DashboardPage` (loaded + empty state).                                                         |
+| Mobile responsive | Table → cards on `<sm`; chart axis margins shrink on narrow viewports.                                                       |
+| Real backend      | NestJS + Postgres + Auth                                                                                                     | Would extend further into the "fullstack" claim |
 
 ---
 
