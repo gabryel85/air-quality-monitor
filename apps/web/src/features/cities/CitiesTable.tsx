@@ -79,6 +79,7 @@ export function CitiesTable({ className }: CitiesTableProps) {
       defaultSortColumn={DEFAULT_SORT.column}
       onRowClick={handleRowClick}
       caption={t('app.title')}
+      testId="cities-table"
       skipSort
       {...(className !== undefined ? { className } : {})}
     />

@@ -52,6 +52,8 @@ export interface DataTableProps<Row, Col extends string> {
   /** Skip sorting inside this component (caller passes pre-sorted rows). */
   readonly skipSort?: boolean;
   readonly className?: string;
+  /** Hook for tests / dev tools — rendered as data-testid on the outer wrapper. */
+  readonly testId?: string;
 }
 
 // ============================================================
@@ -70,6 +72,7 @@ export function DataTable<Row, Col extends string>({
   caption,
   skipSort = false,
   className,
+  testId,
 }: DataTableProps<Row, Col>) {
   const { t } = useTranslation();
   const captionId = useId();
@@ -90,6 +93,7 @@ export function DataTable<Row, Col extends string>({
 
   return (
     <div
+      data-testid={testId}
       className={cn(
         'border-border-subtle bg-surface relative overflow-auto rounded-lg border',
         className,
