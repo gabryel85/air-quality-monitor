@@ -1,18 +1,80 @@
-import { useParams } from 'react-router-dom';
+import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { ChevronLeft, Plus } from 'lucide-react';
+
+import { Button } from '@/components/atoms/Button';
+import { ErrorState } from '@/components/molecules/ErrorState';
+import { useGetCityQuery } from '@/features/cities/citiesApi';
+import { NoteModalRouter } from '@/features/notes/NoteModalRouter';
+import { NotesListInfinite } from '@/features/notes/NotesListInfinite';
+import { cn } from '@/lib/utils';
 
 export function NotesPage() {
+  const { t } = useTranslation();
   const { cityId = '' } = useParams<{ cityId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const { data: city, isError, error, refetch } = useGetCityQuery(cityId, { skip: !cityId });
+
+  const openModal = useCallback(
+    (modal: 'new' | 'details' | 'edit', noteId?: number) => {
+      const next = new URLSearchParams(searchParams);
+      next.set('modal', modal);
+      if (noteId !== undefined) next.set('noteId', String(noteId));
+      else next.delete('noteId');
+      setSearchParams(next, { replace: false });
+    },
+    [searchParams, setSearchParams],
+  );
+
+  const handleOpenDetails = useCallback(
+    (noteId: number) => openModal('details', noteId),
+    [openModal],
+  );
+  const handleEdit = useCallback((noteId: number) => openModal('edit', noteId), [openModal]);
+  const handleNew = useCallback(() => openModal('new'), [openModal]);
+
+  if (!cityId) {
+    return <ErrorState title="Invalid city" body="No city specified in the URL." />;
+  }
 
   return (
-    <section aria-labelledby="notes-title" className="py-8">
-      <h1 id="notes-title" className="text-ink-primary text-2xl font-semibold tracking-tight">
-        Notes for <span className="font-mono">{cityId || '—'}</span>
-      </h1>
-      <div className="border-border bg-subtle/50 mt-8 rounded-lg border border-dashed p-12 text-center">
-        <p className="text-ink-secondary">
-          NotesList + NoteModal land here in features/notes during Phase 5.
-        </p>
-      </div>
+    <section aria-labelledby="notes-title" className="flex flex-col gap-6 py-6">
+      <header className="flex flex-col gap-3">
+        <Link
+          to="/dashboard"
+          className={cn(
+            'text-ink-secondary inline-flex w-fit items-center gap-1 text-sm',
+            'hover:text-ink-primary',
+            'focus-visible:shadow-focus rounded-md focus-visible:outline-none',
+          )}
+        >
+          <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
+          {t('app.title')}
+        </Link>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 id="notes-title" className="text-ink-primary text-2xl font-semibold tracking-tight">
+            {city?.city ?? cityId}
+          </h1>
+          <Button
+            variant="primary"
+            size="md"
+            leadingIcon={<Plus className="h-4 w-4" />}
+            onClick={handleNew}
+          >
+            {t('actions.newNote')}
+          </Button>
+        </div>
+      </header>
+
+      {isError ? (
+        <ErrorState onRetry={() => void refetch()} technicalDetail={error} />
+      ) : (
+        <NotesListInfinite cityId={cityId} onOpenDetails={handleOpenDetails} onEdit={handleEdit} />
+      )}
+
+      <NoteModalRouter cityId={cityId} />
     </section>
   );
 }

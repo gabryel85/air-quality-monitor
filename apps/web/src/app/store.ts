@@ -1,16 +1,20 @@
-import { configureStore, createListenerMiddleware } from '@reduxjs/toolkit';
+import {
+  configureStore,
+  createListenerMiddleware,
+  type TypedStartListening,
+} from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 
 import { tableReducer } from '@/features/cities/tableSlice';
 import { filtersReducer } from '@/features/filters/filtersSlice';
+import { startFilterUrlListeners } from '@/features/filters/listeners';
 import { notesUiReducer } from '@/features/notes/notesUiSlice';
 
 import { baseApi } from './api/baseApi';
 
 /**
- * Listener middleware. Used in F-features to mirror URL ↔ Redux state.
- * No listeners registered at this stage; the middleware is wired in advance so
- * later features can `startListening(...)` without touching the store setup.
+ * Listener middleware. Wires state → URL sync for filters and sort.
+ * Specific listeners registered below.
  */
 export const listenerMiddleware = createListenerMiddleware();
 
@@ -22,12 +26,7 @@ export const store = configureStore({
     notesUi: notesUiReducer,
   },
   middleware: (getDefault) =>
-    getDefault({
-      // RTK Query stores Date objects in `fulfilledTimeStamp`; we keep
-      // serializableCheck on but ignore that key in the future.
-    })
-      .prepend(listenerMiddleware.middleware)
-      .concat(baseApi.middleware),
+    getDefault().prepend(listenerMiddleware.middleware).concat(baseApi.middleware),
   devTools: import.meta.env.DEV,
 });
 
@@ -35,3 +34,10 @@ setupListeners(store.dispatch);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+
+// Register typed listeners after store types are exported (avoids circular type ref).
+const startListening = listenerMiddleware.startListening as TypedStartListening<
+  RootState,
+  AppDispatch
+>;
+startFilterUrlListeners(startListening);

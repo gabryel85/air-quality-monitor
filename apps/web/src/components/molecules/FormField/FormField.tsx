@@ -23,10 +23,10 @@ export interface FormFieldRenderProps {
 
 export interface FormFieldProps {
   readonly label: string;
-  readonly helperText?: string;
-  readonly error?: string;
+  readonly helperText?: string | undefined;
+  readonly error?: string | undefined;
   readonly required?: boolean;
-  readonly className?: string;
+  readonly className?: string | undefined;
   readonly children: (props: FormFieldRenderProps) => ReactNode;
 }
 

@@ -7,7 +7,13 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  globalIgnores(['dist', 'storybook-static', 'public/mockServiceWorker.js']),
+  globalIgnores([
+    'dist',
+    'storybook-static',
+    'public/mockServiceWorker.js',
+    'vitest.config.ts',
+    'postcss.config.cjs',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
