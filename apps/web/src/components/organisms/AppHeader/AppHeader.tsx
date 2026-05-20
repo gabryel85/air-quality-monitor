@@ -8,6 +8,7 @@ import { PollingIndicator } from '@/components/molecules/PollingIndicator';
 import { ThemeToggle } from '@/components/molecules/ThemeToggle/ThemeToggle';
 import { MobileMenu } from '@/components/organisms/MobileMenu/MobileMenu';
 import { selectCitiesError, selectLastUpdatedAt } from '@/features/cities/selectors';
+import { FaultModeToggle } from '@/features/mock-db/FaultModeToggle';
 import { ResetDbButton } from '@/features/mock-db/ResetDbButton';
 import { cn } from '@/lib/utils';
 
@@ -101,6 +102,7 @@ export function AppHeader() {
           ) : null}
           {/* Desktop: controls inline. Mobile: collapsed into the sheet menu. */}
           <div className="hidden items-center gap-3 sm:flex">
+            <FaultModeToggle />
             <ResetDbButton />
             <LanguageToggle />
             <ThemeToggle />
