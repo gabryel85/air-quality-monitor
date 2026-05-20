@@ -22,7 +22,7 @@ import { isSupportedLanguage, SUPPORTED_LANGUAGES, type SupportedLanguage } from
 import { cn } from '@/lib/utils';
 
 export interface MobileMenuProps {
-  readonly hasSelection: boolean;
+  readonly showFreshness: boolean;
   readonly lastUpdatedAt: number | null;
   readonly isHistorical: boolean;
   readonly isError: boolean;
@@ -92,7 +92,7 @@ function Section({ title, children }: { readonly title: string; readonly childre
 }
 
 export function MobileMenu({
-  hasSelection,
+  showFreshness,
   lastUpdatedAt,
   isHistorical,
   isError,
@@ -183,7 +183,7 @@ export function MobileMenu({
           </header>
 
           <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-5 py-5">
-            {hasSelection ? (
+            {showFreshness ? (
               <div className="bg-subtle/60 rounded-lg px-3 py-2.5">
                 <PollingIndicator
                   lastUpdatedAt={lastUpdatedAt}

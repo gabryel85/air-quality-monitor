@@ -35,6 +35,11 @@ export function AppHeader() {
   const hasSelection = country !== null && year !== null;
   const isHistorical = year !== null && year < new Date().getFullYear();
 
+  // The city view has its own freshness indicator inside the trend chart, so
+  // suppress the header one there to avoid showing it twice.
+  const isCityRoute = location.pathname.includes('/cities/');
+  const showFreshness = hasSelection && !isCityRoute;
+
   const crumbs = matches
     .map((m) => {
       if (!isRouteHandle(m.handle) || !m.handle.crumb) return null;
@@ -92,7 +97,7 @@ export function AppHeader() {
           </ol>
         </nav>
         <div className="flex shrink-0 items-center gap-3">
-          {hasSelection ? (
+          {showFreshness ? (
             <PollingIndicator
               lastUpdatedAt={lastUpdatedAt}
               isHistorical={isHistorical}
@@ -108,7 +113,7 @@ export function AppHeader() {
             <ThemeToggle />
           </div>
           <MobileMenu
-            hasSelection={hasSelection}
+            showFreshness={showFreshness}
             lastUpdatedAt={lastUpdatedAt}
             isHistorical={isHistorical}
             isError={Boolean(citiesError)}
