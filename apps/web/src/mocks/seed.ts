@@ -25,7 +25,13 @@ export const COUNTRIES: CountryDto[] = [
   { id: 'NO', name: 'Norge' },
 ];
 
-const ALL_YEARS = [2022, 2023, 2024, 2025] as const;
+/**
+ * Years are relative to "now" so the current year is always selectable
+ * (it's the only one that polls live). Today's set: [now-3 … now].
+ * Recomputed at module load — no hard-coded years to go stale.
+ */
+const CURRENT_YEAR = new Date().getFullYear();
+const ALL_YEARS = [CURRENT_YEAR - 3, CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR];
 
 export const YEARS_BY_COUNTRY: Record<string, number[]> = Object.fromEntries(
   COUNTRIES.map((c) => [c.id, [...ALL_YEARS]]),
@@ -281,9 +287,11 @@ export function getBaseValues(
 } {
   const base = BASE_VALUES[cityId];
   if (!base) return { no2: 0, co: 0, pm10: 0 };
-  /** Year drift — small but visible variation. EU regulations tighten
-   *  yearly so recent years skew slightly cleaner on average. */
-  const drift = year === 2022 ? 1.08 : year === 2023 ? 1.02 : year === 2024 ? 1.0 : 0.95;
+  /** Year drift relative to the current year — EU regulations tighten
+   *  over time, so older years skew slightly more polluted. Current
+   *  year is the 1.0 baseline; clamped for stray past-year timestamps. */
+  const yearsAgo = Math.min(Math.max(CURRENT_YEAR - year, 0), 6);
+  const drift = 1 + yearsAgo * 0.035;
   return {
     no2: round2(base.no2 * drift),
     co: round2(base.co * drift),
