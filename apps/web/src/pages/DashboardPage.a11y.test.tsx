@@ -6,6 +6,7 @@
  */
 
 import { http, HttpResponse } from 'msw';
+import { waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 
@@ -37,24 +38,30 @@ function stableStatsHandler() {
 describe('a11y — DashboardPage', () => {
   it('has no axe violations with loaded data', async () => {
     server.use(stableStatsHandler());
-    const { container, findAllByText } = renderWithProviders(<DashboardPage />, {
+    const { container, findAllByText, queryByText } = renderWithProviders(<DashboardPage />, {
       initialRoute: '/dashboard?country=PL&year=2025',
     });
 
     // Wait for data to render so we audit the full page, not the skeleton.
     await findAllByText(/Gdańsk/);
+    await waitFor(() => {
+      expect(queryByText('Loading…')).toBeNull();
+    });
 
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
   it('has no axe violations in the empty state', async () => {
-    const { container, findByRole } = renderWithProviders(<DashboardPage />, {
+    const { container, findByRole, queryByText } = renderWithProviders(<DashboardPage />, {
       initialRoute: '/dashboard',
     });
 
     // Heading is the most reliable landmark for "page rendered".
     await findByRole('heading', { name: /Monitor jakości|Air Quality/ });
+    await waitFor(() => {
+      expect(queryByText('Loading…')).toBeNull();
+    });
 
     const results = await axe(container);
     expect(results).toHaveNoViolations();

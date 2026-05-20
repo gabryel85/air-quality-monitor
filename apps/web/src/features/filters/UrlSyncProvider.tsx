@@ -1,23 +1,18 @@
 /**
  * UrlSyncProvider — single source of truth for filter state.
  *
- * Bidirectional sync URL ↔ Redux:
+ * Bidirectional sync URL <-> Redux:
  *
  *   URL changes (back/forward, manual edit, deep-link)
  *     → useSearchParams() picks it up
  *     → dispatch(setAllFromUrl(...))   (filtersSlice + tableSlice)
  *
  *   Redux changes (user picks country, sorts column, types in filter)
- *     → listenerMiddleware in store.ts watches filter/table actions
- *     → navigates to new search string (replace, not push)
- *
- * The listener uses a window-level navigation function injected here,
- * so the middleware stays decoupled from react-router. We track a
- * "lastWrittenSearch" ref to avoid re-dispatching when the URL changes
- * BECAUSE we just wrote to it.
+ *     → this provider serializes the state
+ *     → navigates to the new search string (replace, not push)
  */
 
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
@@ -25,7 +20,6 @@ import { setSort } from '@/features/cities/tableSlice';
 import { setAllFromUrl } from '@/features/filters/filtersSlice';
 
 import { parseUrlState, serializeUrlState } from './urlState';
-import { setUrlWriter } from './urlWriter';
 
 export function UrlSyncProvider({ children }: { readonly children: ReactNode }) {
   const dispatch = useAppDispatch();
@@ -36,18 +30,7 @@ export function UrlSyncProvider({ children }: { readonly children: ReactNode }) 
 
   // Track what we wrote ourselves so URL→state doesn't loop.
   const lastWrittenRef = useRef<string>('');
-
-  // Register the URL writer for listener middleware.
-  useEffect(() => {
-    setUrlWriter((search) => {
-      lastWrittenRef.current = search;
-      const next = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
-      setSearchParams(next, { replace: true });
-    });
-    return () => {
-      setUrlWriter(null);
-    };
-  }, [setSearchParams]);
+  const [hasReadInitialUrl, setHasReadInitialUrl] = useState(false);
 
   // URL → Redux: parse and apply any changes that don't match the store.
   useEffect(() => {
@@ -70,6 +53,7 @@ export function UrlSyncProvider({ children }: { readonly children: ReactNode }) 
     if (parsed.sort !== undefined) {
       dispatch(setSort(parsed.sort));
     }
+    setHasReadInitialUrl(true);
     // Note: we don't reset to defaults when params are absent — that would
     // wipe state during navigation. Defaults appear when URL is empty
     // because parseUrlState returns no keys, leaving Redux alone (already
@@ -77,10 +61,10 @@ export function UrlSyncProvider({ children }: { readonly children: ReactNode }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // Redux → URL: redundant safety net. listenerMiddleware does the primary work,
-  // but if the store changes from elsewhere (e.g. SSR hydrate, devtools jump),
-  // reconcile here. Diffs against current URL to avoid no-op writes.
+  // Redux → URL: write only after the initial URL has had a chance to hydrate Redux.
+  // Diff against the current URL to avoid no-op writes.
   useEffect(() => {
+    if (!hasReadInitialUrl) return;
     const desired = serializeUrlState({ ...filters, sort });
     const current = `?${searchParams.toString()}`;
     const normalizedCurrent = current === '?' ? '' : current;
@@ -90,7 +74,7 @@ export function UrlSyncProvider({ children }: { readonly children: ReactNode }) 
       setSearchParams(next, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, sort]);
+  }, [filters, sort, hasReadInitialUrl]);
 
   return <>{children}</>;
 }

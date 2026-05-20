@@ -1,11 +1,11 @@
 /**
  * MSW request handlers — mock backend for the entire app.
  *
- * Chaos simulation (configurable via env, defaults to realistic):
+ * Failure simulation:
  *   - Random delay 200-800ms on stats endpoint
- *   - 5% chance the stats endpoint returns 500 (tests retry path)
- *   - 10% chance per measurement value is null (sensor failure)
- *   - 10% chance a row is omitted entirely (station failure)
+ *   - Optional `?forceError=1` returns 503 (manual retry-path testing)
+ *   - Deterministic 10% per measurement value is null (sensor failure)
+ *   - Deterministic 10% of rows omitted (station failure)
  *
  * State: notes are mutated in-memory; reload resets.
  */
@@ -37,17 +37,25 @@ const SERIES_RANGES: ReadonlySet<SeriesRange> = new Set(['24h', '7d', '30d', 'ye
 const NOTES: NoteDto[] = initialNotes();
 let nextNoteId = NOTES.reduce((max, n) => Math.max(max, n.id), 0) + 1;
 
-const STATS_FAILURE_RATE = 0.05;
 const NULL_RATE = 0.1;
 const ROW_OMISSION_RATE = 0.1;
 const NOTES_PAGE_SIZE = 10;
 
-function withChance(rate: number): boolean {
-  return Math.random() < rate;
+function hashToUnit(input: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 0xffffffff;
 }
 
-function maybeNull(value: number): string | null {
-  return withChance(NULL_RATE) ? null : value.toFixed(2);
+function deterministicChance(key: string, rate: number): boolean {
+  return hashToUnit(key) < rate;
+}
+
+function maybeNull(key: string, value: number): string | null {
+  return deterministicChance(key, NULL_RATE) ? null : value.toFixed(2);
 }
 
 function findCity(cityId: string): CityDto | undefined {
@@ -93,13 +101,14 @@ export const handlers = [
   http.get('/api/country/:countryId/cities/stats/24H', async ({ params, request }) => {
     await delay(randomDelay());
 
-    // Simulated server error → tests retry path
-    if (withChance(STATS_FAILURE_RATE)) {
+    const url = new URL(request.url);
+
+    // Manual retry-path simulation without making normal polling nondeterministic.
+    if (url.searchParams.get('forceError') === '1') {
       return HttpResponse.json({ message: 'Simulated upstream failure (mock)' }, { status: 503 });
     }
 
     const countryId = String(params['countryId']);
-    const url = new URL(request.url);
     const yearParam = url.searchParams.get('year');
     const year = yearParam ? Number(yearParam) : NaN;
 
@@ -113,15 +122,18 @@ export const handlers = [
     }
 
     const rows: CityStatsDto[] = cities
-      .filter(() => !withChance(ROW_OMISSION_RATE))
+      .filter(
+        (c) =>
+          !deterministicChance(`row:${countryId}:${String(year)}:${c.cityId}`, ROW_OMISSION_RATE),
+      )
       .map((c) => {
         const v = getBaseValues(c.cityId, year);
         return {
           cityId: c.cityId,
           city: c.city,
-          maxNO2: maybeNull(v.no2),
-          maxCO: maybeNull(v.co),
-          maxPM10: maybeNull(v.pm10),
+          maxNO2: maybeNull(`no2:${countryId}:${String(year)}:${c.cityId}`, v.no2),
+          maxCO: maybeNull(`co:${countryId}:${String(year)}:${c.cityId}`, v.co),
+          maxPM10: maybeNull(`pm10:${countryId}:${String(year)}:${c.cityId}`, v.pm10),
         };
       });
 

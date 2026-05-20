@@ -13,7 +13,7 @@ export function App() {
     <ErrorBoundary FallbackComponent={RouteErrorFallback}>
       <Provider store={store}>
         <ThemeProvider>
-          <RouterProvider router={router} />
+          <RouterProvider router={router} future={{ v7_startTransition: true }} />
         </ThemeProvider>
       </Provider>
     </ErrorBoundary>

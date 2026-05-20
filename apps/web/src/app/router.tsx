@@ -29,26 +29,29 @@ function PageLoadingFallback() {
   );
 }
 
-export const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <AppShell />,
-    children: [
-      { index: true, element: <Navigate to="/dashboard" replace /> },
-      {
-        path: 'dashboard',
-        element: <DashboardPage />,
-        handle: { crumb: () => 'Dashboard' },
-      },
-      {
-        path: 'cities/:cityId/notes',
-        element: withSuspense(NotesPage),
-        handle: {
-          crumb: (params: Readonly<Record<string, string | undefined>>) =>
-            `${params['cityId'] ?? ''} · Notes`,
+export const router = createBrowserRouter(
+  [
+    {
+      path: '/',
+      element: <AppShell />,
+      children: [
+        { index: true, element: <Navigate to="/dashboard" replace /> },
+        {
+          path: 'dashboard',
+          element: <DashboardPage />,
+          handle: { crumb: () => 'Dashboard' },
         },
-      },
-      { path: '*', element: <NotFoundPage /> },
-    ],
-  },
-]);
+        {
+          path: 'cities/:cityId/notes',
+          element: withSuspense(NotesPage),
+          handle: {
+            crumb: (params: Readonly<Record<string, string | undefined>>) =>
+              `${params['cityId'] ?? ''} · Notes`,
+          },
+        },
+        { path: '*', element: <NotFoundPage /> },
+      ],
+    },
+  ],
+  { future: { v7_relativeSplatPath: true } },
+);
