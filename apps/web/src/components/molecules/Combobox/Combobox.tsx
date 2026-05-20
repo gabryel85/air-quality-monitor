@@ -19,7 +19,7 @@
 
 import * as Popover from '@radix-ui/react-popover';
 import { Command } from 'cmdk';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, Search } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
 import { Spinner } from '@/components/atoms/Spinner';
@@ -52,7 +52,9 @@ const triggerClass = cn(
   'text-base text-ink-primary',
   'transition-colors duration-fast ease-out',
   'hover:border-border-strong',
-  'data-[state=open]:border-border-focus data-[state=open]:shadow-focus',
+  // Open: just shift the border colour — no heavy ring (the panel itself
+  // is the visible affordance). Keyboard focus still gets the full ring.
+  'data-[state=open]:border-border-focus',
   'focus:outline-none focus-visible:border-border-focus focus-visible:shadow-focus',
   'disabled:cursor-not-allowed disabled:bg-subtle disabled:opacity-70',
   'aria-[invalid=true]:border-error aria-[invalid=true]:shadow-[0_0_0_3px_rgba(197,48,48,0.20)]',
@@ -119,17 +121,22 @@ export function Combobox<T extends string>({
               return haystack.includes(search.toLowerCase()) ? 1 : 0;
             }}
           >
-            <div className="border-border-subtle border-b px-3">
+            {/* Search row — leading icon + input. No focus ring here:
+                the open panel is the focus context, an extra orange ring
+                inside it is visual noise. */}
+            <div className="border-border-subtle flex items-center gap-2 border-b px-3">
+              <Search className="text-ink-tertiary h-4 w-4 shrink-0" aria-hidden="true" />
               <Command.Input
                 placeholder={searchPlaceholder}
                 className={cn(
                   'text-ink-primary h-10 w-full bg-transparent text-base',
-                  'placeholder:text-ink-tertiary focus:outline-none',
+                  'placeholder:text-ink-tertiary',
+                  'focus:outline-none focus-visible:shadow-none',
                 )}
               />
             </div>
-            <Command.List className="max-h-60 overflow-y-auto p-1">
-              <Command.Empty className="text-ink-tertiary px-3 py-2 text-sm">
+            <Command.List className="max-h-64 overflow-y-auto p-1.5">
+              <Command.Empty className="text-ink-tertiary px-2.5 py-6 text-center text-sm">
                 {emptyMessage}
               </Command.Empty>
               {options.map((option) => (
@@ -142,8 +149,8 @@ export function Combobox<T extends string>({
                     setOpen(false);
                   }}
                   className={cn(
-                    'flex cursor-default select-none items-center justify-between gap-2',
-                    'text-ink-primary rounded-sm px-3 py-1.5 text-base outline-none',
+                    'flex h-9 cursor-pointer select-none items-center justify-between gap-2',
+                    'text-ink-primary rounded-md px-2.5 text-base outline-none',
                     'data-[selected=true]:bg-subtle',
                   )}
                 >
