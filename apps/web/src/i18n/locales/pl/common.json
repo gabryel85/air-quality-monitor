@@ -12,6 +12,7 @@
     "clearFilter": "Wyczyść filtr",
     "details": "Szczegóły",
     "edit": "Edytuj",
+    "delete": "Usuń",
     "newNote": "Nowa notatka",
     "goToCurrentYear": "Przejdź do {{year}}"
   },
@@ -72,6 +73,14 @@
       "tip": "Wyczyszczenie lokalnej bazy notatek zwykle rozwiązuje problem — przywrócone zostaną wtedy przykładowe notatki.",
       "action": "Usuń dane z IndexedDB"
     },
+    "invalidCity": {
+      "title": "Nieprawidłowe miasto",
+      "body": "W adresie URL nie podano miasta."
+    },
+    "technicalDetail": "Szczegóły techniczne",
+    "loadingMore": "Ładowanie kolejnych…",
+    "loadingOptions": "Ładowanie opcji",
+    "loadingChart": "Ładowanie wykresu",
     "sensorUnavailable": "Czujnik niedostępny"
   },
   "theme": {
@@ -115,5 +124,12 @@
       "notes": "Lista notatek",
       "noteMutations": "Zapis notatek"
     }
+  },
+  "notes": {
+    "empty": {
+      "title": "Brak notatek",
+      "body": "Dodaj pierwszą notatkę kontekstową dla tego miasta."
+    },
+    "deleteConfirm": "Usunąć tę notatkę na stałe?"
   }
 }

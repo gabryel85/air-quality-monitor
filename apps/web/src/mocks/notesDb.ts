@@ -166,3 +166,15 @@ export async function updateNote(
   await (await getDb()).put(STORE, updated);
   return updated;
 }
+
+/** Removes a note. Resolves `true` if it existed, `false` if it was not found. */
+export async function deleteNote(cityId: string, noteId: number): Promise<boolean> {
+  const existing = await getNote(cityId, noteId);
+  if (!existing) return false;
+  if (!hasIndexedDb) {
+    memory = (memory ?? []).filter((n) => n.id !== noteId);
+    return true;
+  }
+  await (await getDb()).delete(STORE, noteId);
+  return true;
+}

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 import { cn } from '@/lib/utils';
 
 import { Skeleton } from './Skeleton';
@@ -8,13 +10,14 @@ export interface BarChartSkeletonProps {
 }
 
 export function BarChartSkeleton({ bars = 7, className }: BarChartSkeletonProps) {
+  const { t } = useTranslation();
   /** Deterministic pseudo-random heights so each render looks alive but stable. */
   const heights = Array.from({ length: bars }, (_, i) => 30 + ((i * 17) % 60));
 
   return (
     <div
       role="status"
-      aria-label="Loading chart"
+      aria-label={t('states.loadingChart')}
       className={cn(
         'border-border-subtle bg-surface rounded-lg border p-4',
         'flex h-[280px] flex-col',

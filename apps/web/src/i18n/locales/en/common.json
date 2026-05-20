@@ -12,6 +12,7 @@
     "clearFilter": "Clear filter",
     "details": "Details",
     "edit": "Edit",
+    "delete": "Delete",
     "newNote": "New note",
     "goToCurrentYear": "Go to {{year}}"
   },
@@ -72,6 +73,14 @@
       "tip": "Clearing the local notes database fixes this in most cases — the original sample notes are restored afterwards.",
       "action": "Delete IndexedDB data"
     },
+    "invalidCity": {
+      "title": "Invalid city",
+      "body": "No city specified in the URL."
+    },
+    "technicalDetail": "Technical detail",
+    "loadingMore": "Loading more…",
+    "loadingOptions": "Loading options",
+    "loadingChart": "Loading chart",
     "sensorUnavailable": "Sensor unavailable"
   },
   "theme": {
@@ -115,5 +124,12 @@
       "notes": "Notes list",
       "noteMutations": "Saving notes"
     }
+  },
+  "notes": {
+    "empty": {
+      "title": "No notes yet",
+      "body": "Add the first context note for this city."
+    },
+    "deleteConfirm": "Delete this note permanently?"
   }
 }

@@ -38,7 +38,7 @@ export function NotesPage() {
   const handleNew = useCallback(() => openModal('new'), [openModal]);
 
   if (!cityId) {
-    return <ErrorState title="Invalid city" body="No city specified in the URL." />;
+    return <ErrorState title={t('states.invalidCity.title')} body={t('states.invalidCity.body')} />;
   }
 
   return (

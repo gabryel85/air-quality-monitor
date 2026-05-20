@@ -21,6 +21,7 @@ import * as Popover from '@radix-ui/react-popover';
 import { Command } from 'cmdk';
 import { Check, ChevronsUpDown, Search } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Spinner } from '@/components/atoms/Spinner';
 import { cn } from '@/lib/utils';
@@ -74,6 +75,7 @@ export function Combobox<T extends string>({
   loading,
   className,
 }: ComboboxProps<T>): ReactNode {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const isEmpty = options.length === 0 && loading !== true;
   const isDisabled = disabled === true || loading === true || isEmpty;
@@ -91,8 +93,8 @@ export function Combobox<T extends string>({
         <span className="truncate text-left">
           {loading === true ? (
             <span className="text-ink-secondary inline-flex items-center gap-2">
-              <Spinner size="sm" label="Loading options" />
-              <span>Loading…</span>
+              <Spinner size="sm" label={t('states.loadingOptions')} />
+              <span>{t('states.loadingOptions')}</span>
             </span>
           ) : selected ? (
             selected.label

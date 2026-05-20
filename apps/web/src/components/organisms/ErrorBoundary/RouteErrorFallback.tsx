@@ -25,7 +25,7 @@ export function RouteErrorFallback({ error, resetErrorBoundary }: FallbackProps)
           <p className="text-ink-secondary mt-1 text-base">{t('states.error.body')}</p>
           <details className="text-ink-tertiary mt-3 text-sm">
             <summary className="hover:text-ink-secondary cursor-pointer select-none">
-              Technical detail
+              {t('states.technicalDetail')}
             </summary>
             <pre className="bg-subtle mt-2 overflow-x-auto rounded-md p-3 font-mono text-xs">
               {message}

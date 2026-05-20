@@ -14,7 +14,14 @@
 import { delay, http, HttpResponse } from 'msw';
 
 import { isFaulty } from './faultMode';
-import { createNote, DbUnavailableError, getNote, listNotes, updateNote } from './notesDb';
+import {
+  createNote,
+  DbUnavailableError,
+  deleteNote,
+  getNote,
+  listNotes,
+  updateNote,
+} from './notesDb';
 import { generateSeries } from './series';
 import { CITIES_BY_COUNTRY, COUNTRIES, getBaseValues, YEARS_BY_COUNTRY } from './seed';
 import type {
@@ -279,6 +286,22 @@ export const handlers = [
       const updated = await updateNote(String(params['cityId']), Number(params['noteId']), body);
       if (!updated) return HttpResponse.json({ message: 'Note not found' }, { status: 404 });
       return HttpResponse.json<NoteDto>(updated);
+    } catch (error) {
+      return storageErrorResponse(error);
+    }
+  }),
+
+  /* -----------------------------------------------------------
+   * DELETE /api/cities/:cityId/notes/:noteId
+   * --------------------------------------------------------- */
+  http.delete('/api/cities/:cityId/notes/:noteId', async ({ params }) => {
+    await delay(randomDelay());
+    if (isFaulty('noteMutations')) return faultResponse();
+
+    try {
+      const removed = await deleteNote(String(params['cityId']), Number(params['noteId']));
+      if (!removed) return HttpResponse.json({ message: 'Note not found' }, { status: 404 });
+      return new HttpResponse(null, { status: 204 });
     } catch (error) {
       return storageErrorResponse(error);
     }

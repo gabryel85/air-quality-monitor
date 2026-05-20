@@ -50,6 +50,14 @@ export const notesApi = baseApi.injectEndpoints({
       },
     ),
 
+    deleteNote: build.mutation<void, { cityId: string; noteId: number }>({
+      query: ({ cityId, noteId }) => ({
+        url: `/cities/${encodeURIComponent(cityId)}/notes/${String(noteId)}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _err, { cityId }) => [{ type: 'Notes', id: cityId }],
+    }),
+
     getNote: build.query<NoteDto, { cityId: string; noteId: number }>({
       query: ({ cityId, noteId }) =>
         `/cities/${encodeURIComponent(cityId)}/notes/${String(noteId)}`,
@@ -64,6 +72,7 @@ export const {
   useGetNotesInfiniteQuery,
   useCreateNoteMutation,
   useUpdateNoteMutation,
+  useDeleteNoteMutation,
   useGetNoteQuery,
 } = notesApi;
 

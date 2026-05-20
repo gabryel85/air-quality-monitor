@@ -8,7 +8,7 @@
  * the new note included. That's the production contract the UI relies on.
  */
 
-import { waitForElementToBeRemoved, within } from '@testing-library/react';
+import { waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
@@ -59,6 +59,36 @@ describe('NotesPage — create note flow', () => {
     await waitForElementToBeRemoved(() => utils.queryByRole('dialog'), { timeout: 5000 });
     const matches = await utils.findAllByText('Test note from integration');
     expect(matches.length).toBeGreaterThan(0);
+  });
+});
+
+describe('NotesPage — delete note flow', () => {
+  it('deletes a note through the edit modal and removes it from the list', async () => {
+    const utils = renderNotesFor('krakow');
+
+    // Kraków has a seed note titled "Smog episode confirmed".
+    await utils.findAllByText(/Smog episode confirmed/);
+
+    // Open its edit modal (the accessible name carries the note title).
+    const editButton = await utils.findByRole('button', {
+      name: /(Edytuj|Edit).*Smog episode confirmed/,
+    });
+    await utils.user.click(editButton);
+
+    // The modal opens in a loading state, then swaps to the edit form once the
+    // note fetch resolves — findByRole waits through that transition.
+    const deleteTrigger = await utils.findByRole('button', { name: /^(Usuń|Delete)$/ });
+    await utils.user.click(deleteTrigger);
+
+    // First click revealed the inline confirm; the second commits it.
+    const confirmDelete = await utils.findByRole('button', { name: /^(Usuń|Delete)$/ });
+    await utils.user.click(confirmDelete);
+
+    // Modal closes and the note is gone from the list.
+    await waitForElementToBeRemoved(() => utils.queryByRole('dialog'), { timeout: 5000 });
+    await waitFor(() => {
+      expect(utils.queryAllByText(/Smog episode confirmed/)).toHaveLength(0);
+    });
   });
 });
 

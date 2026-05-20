@@ -100,13 +100,7 @@ export function NotesListInfinite({ cityId, onOpenDetails, onEdit }: NotesListIn
   const items = data?.pages.flatMap((p) => p.items) ?? [];
 
   if (items.length === 0) {
-    return (
-      <EmptyState
-        kind="noData"
-        title="No notes yet"
-        body="Add the first context note for this city."
-      />
-    );
+    return <EmptyState kind="noData" title={t('notes.empty.title')} body={t('notes.empty.body')} />;
   }
 
   return (
@@ -118,7 +112,7 @@ export function NotesListInfinite({ cityId, onOpenDetails, onEdit }: NotesListIn
       {/* Sentinel + fetching indicator */}
       {hasNextPage ? (
         <div ref={sentinelRef} className="flex items-center justify-center py-4">
-          {isFetchingNextPage ? <Spinner size="md" label="Loading more" /> : null}
+          {isFetchingNextPage ? <Spinner size="md" label={t('states.loadingMore')} /> : null}
         </div>
       ) : isFetching ? (
         <div className="text-ink-tertiary flex items-center justify-center py-2 text-xs">

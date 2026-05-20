@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,7 @@ import { FormField } from '@/components/molecules/FormField';
 import { Modal, ModalBody, ModalFooter } from '@/components/organisms/Modal';
 import { cn } from '@/lib/utils';
 
-import { useUpdateNoteMutation } from './notesApi';
+import { useDeleteNoteMutation, useUpdateNoteMutation } from './notesApi';
 import { noteContentSchema, type NoteContentValues } from './noteSchemas';
 import type { NoteDto } from '@/mocks/types';
 
@@ -22,7 +22,9 @@ export interface EditNoteModalProps {
 export function EditNoteModal({ cityId, note, onClose }: EditNoteModalProps) {
   const { t } = useTranslation();
   const [updateNote, { isLoading: isSubmitting }] = useUpdateNoteMutation();
+  const [deleteNote, { isLoading: isDeleting }] = useDeleteNoteMutation();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const {
     register,
@@ -45,6 +47,17 @@ export function EditNoteModal({ cityId, note, onClose }: EditNoteModalProps) {
       await updateNote({ cityId, noteId: note.id, input: values }).unwrap();
       onClose();
     } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : t('states.error.title'));
+    }
+  };
+
+  const onDelete = async (): Promise<void> => {
+    setSubmitError(null);
+    try {
+      await deleteNote({ cityId, noteId: note.id }).unwrap();
+      onClose();
+    } catch (err) {
+      setConfirmingDelete(false);
       setSubmitError(err instanceof Error ? err.message : t('states.error.title'));
     }
   };
@@ -89,7 +102,7 @@ export function EditNoteModal({ cityId, note, onClose }: EditNoteModalProps) {
                 id={id}
                 aria-describedby={describedBy}
                 aria-invalid={invalid ? 'true' : undefined}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isDeleting}
                 rows={8}
                 {...register('content')}
                 className={cn(
@@ -106,12 +119,49 @@ export function EditNoteModal({ cityId, note, onClose }: EditNoteModalProps) {
           </FormField>
         </ModalBody>
         <ModalFooter>
-          <Button variant="ghost" type="button" onClick={onClose}>
-            {t('actions.cancel')}
-          </Button>
-          <Button type="submit" variant="primary" loading={isSubmitting}>
-            {t('actions.save')}
-          </Button>
+          {confirmingDelete ? (
+            <>
+              <span className="text-ink-secondary mr-auto text-sm">{t('notes.deleteConfirm')}</span>
+              <Button
+                variant="ghost"
+                type="button"
+                disabled={isDeleting}
+                onClick={() => {
+                  setConfirmingDelete(false);
+                }}
+              >
+                {t('actions.cancel')}
+              </Button>
+              <Button
+                variant="destructive"
+                type="button"
+                loading={isDeleting}
+                onClick={() => void onDelete()}
+              >
+                {t('actions.delete')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                type="button"
+                className="text-error mr-auto"
+                leadingIcon={<Trash2 className="h-3.5 w-3.5" />}
+                onClick={() => {
+                  setConfirmingDelete(true);
+                }}
+              >
+                {t('actions.delete')}
+              </Button>
+              <Button variant="ghost" type="button" onClick={onClose}>
+                {t('actions.cancel')}
+              </Button>
+              <Button type="submit" variant="primary" loading={isSubmitting}>
+                {t('actions.save')}
+              </Button>
+            </>
+          )}
         </ModalFooter>
       </form>
     </Modal>

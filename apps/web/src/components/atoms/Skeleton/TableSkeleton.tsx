@@ -4,6 +4,8 @@
  * when real data arrives.
  */
 
+import { useTranslation } from 'react-i18next';
+
 import { cn } from '@/lib/utils';
 
 import { LineSkeleton } from './Skeleton';
@@ -17,10 +19,11 @@ export interface TableSkeletonProps {
 }
 
 export function TableSkeleton({ rows = 7, columns = 4, className }: TableSkeletonProps) {
+  const { t } = useTranslation();
   return (
     <div
       role="status"
-      aria-label="Loading data"
+      aria-label={t('states.loading')}
       className={cn('border-border-subtle bg-surface overflow-hidden rounded-lg border', className)}
     >
       <div className="border-border-subtle bg-subtle border-b px-4 py-3">

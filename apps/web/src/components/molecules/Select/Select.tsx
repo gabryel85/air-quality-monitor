@@ -21,6 +21,7 @@
 import * as RxSelect from '@radix-ui/react-select';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { forwardRef, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Spinner } from '@/components/atoms/Spinner';
 import { cn } from '@/lib/utils';
@@ -80,6 +81,7 @@ export const Select = forwardRef(function Select<T extends string>(
   }: SelectProps<T>,
   ref: React.ForwardedRef<HTMLButtonElement>,
 ) {
+  const { t } = useTranslation();
   const isEmpty = options.length === 0 && !loading;
   const isTriggerDisabled = disabled || loading || isEmpty;
   const selectedOption = value ? (options.find((o) => o.value === value) ?? null) : null;
@@ -103,8 +105,8 @@ export const Select = forwardRef(function Select<T extends string>(
         <span className="truncate text-left">
           {loading ? (
             <span className="text-ink-secondary inline-flex items-center gap-2">
-              <Spinner size="sm" label="Loading options" />
-              <span>Loading…</span>
+              <Spinner size="sm" label={t('states.loadingOptions')} />
+              <span>{t('states.loadingOptions')}</span>
             </span>
           ) : selectedOption ? (
             (renderValue?.(selectedOption) ?? selectedOption.label)

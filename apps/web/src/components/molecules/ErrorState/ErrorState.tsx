@@ -88,7 +88,7 @@ export function ErrorState({
           {detail ? (
             <details className="text-ink-tertiary mt-3 text-sm">
               <summary className="hover:text-ink-secondary cursor-pointer select-none">
-                Technical detail
+                {t('states.technicalDetail')}
               </summary>
               <pre className="bg-subtle mt-2 max-h-40 overflow-auto rounded-md p-3 font-mono text-xs leading-snug">
                 {detail}
