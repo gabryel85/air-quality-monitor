@@ -80,7 +80,9 @@ export function Modal({
             'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2',
             'flex max-h-[90vh] flex-col',
             'bg-surface text-ink-primary shadow-xl sm:rounded-xl',
-            'data-[state=open]:animate-slide-up-fade',
+            // Mobile sheet has no centering transform → a plain fade is safe.
+            // Desktop is centered → modal-in keeps translate(-50%,-50%).
+            'data-[state=open]:animate-fade-in sm:data-[state=open]:animate-modal-in',
             /* Mobile full-screen sheet */
             'max-sm:inset-0 max-sm:h-full max-sm:max-h-none max-sm:max-w-none',
             'max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none',

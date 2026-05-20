@@ -215,6 +215,13 @@ const config: Config = {
           from: { opacity: '0', transform: 'translateY(4px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
+        // Entrance for the centered desktop modal. The transform keeps the
+        // translate(-50%,-50%) centering — animating bare translateY would
+        // drop it for the animation's duration and the modal would snap.
+        'modal-in': {
+          from: { opacity: '0', transform: 'translate(-50%, -50%) translateY(6px) scale(0.98)' },
+          to: { opacity: '1', transform: 'translate(-50%, -50%) translateY(0) scale(1)' },
+        },
       },
 
       animation: {
@@ -223,6 +230,7 @@ const config: Config = {
         'fade-in': 'fade-in var(--duration-normal) var(--easing-out)',
         'fade-out': 'fade-out var(--duration-normal) var(--easing-in)',
         'slide-up-fade': 'slide-up-fade var(--duration-fast) var(--easing-out)',
+        'modal-in': 'modal-in var(--duration-fast) var(--easing-out)',
       },
     },
   },

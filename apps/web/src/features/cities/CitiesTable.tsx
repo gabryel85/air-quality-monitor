@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { CityCard } from '@/components/organisms/CityCard';
@@ -20,6 +20,7 @@ export function CitiesTable({ className }: CitiesTableProps) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const rows = useAppSelector(selectSortedCities);
   const sort = useAppSelector(selectSortConfig);
@@ -43,9 +44,14 @@ export function CitiesTable({ className }: CitiesTableProps) {
 
   const openNotes = useCallback(
     (cityId: string) => {
-      navigate(`/cities/${encodeURIComponent(cityId)}/notes`);
+      // Carry the country/year/filter query string so the city view keeps the
+      // dashboard context — and a refresh there still knows which year to show.
+      navigate({
+        pathname: `/cities/${encodeURIComponent(cityId)}/notes`,
+        search: location.search,
+      });
     },
-    [navigate],
+    [navigate, location.search],
   );
 
   return (
