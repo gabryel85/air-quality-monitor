@@ -103,13 +103,14 @@ ing/
        └─▶ getNotes (infinite query)
            createNote / updateNote ──▶ invalidates → list refetches
 
-                URL ↔ Redux mirror
-            ┌─────────────────────────────┐
-            │  ?country ?year ?q ?mode    │
-            │  ?sort  ?modal ?noteId      │
-            └─────────────────────────────┘
-            (UrlSyncProvider — one component, both directions:
-             URL→store on navigation, store→URL on slice change)
+                URL — the shared source of truth
+            ┌──────────────────────────────────────────┐
+            │ ?country ?year ?q ?mode ?sort            │
+            │     ↕ mirrored with Redux via UrlSyncProvider
+            │ ?modal ?noteId                           │
+            │     → read directly by NoteModalRouter   │
+            │       (URL-only, no Redux slice)         │
+            └──────────────────────────────────────────┘
 ```
 
 ---
@@ -118,12 +119,17 @@ ing/
 
 > The "why" behind every non-obvious choice — what a recruiter would ask in interview.
 
-### 1. URL is the source of truth, Redux mirrors it
+### 1. URL is the source of truth
 
-Every meaningful piece of state — country, year, city filter, match mode, sort, and the open note modal — lives in the URL search params. `UrlSyncProvider`, mounted once at the route shell, keeps URL and Redux in sync **both directions** with two effects:
+Every meaningful piece of state lives in the URL search params — in two tiers:
 
-- **URL → store:** on a `useSearchParams()` change, `parseUrlState` reads the params and dispatches `setAllFromUrl` / `setSort`. Invalid values are silently dropped — a bad pasted link never crashes the app.
-- **Store → URL:** when the slices change, state is serialized and pushed via `setSearchParams(…, { replace: true })` — _replace_, not push, so a keystroke doesn't spam the history stack.
+- **Mirrored with Redux** — `country`, `year`, `q` (city filter), `mode` (filter match mode), `sort`. `UrlSyncProvider`, mounted once at the route shell, keeps these in sync with the `filters` + `table` slices, both directions.
+- **URL-only, no Redux mirror** — `modal` + `noteId` (the open note modal). `NoteModalRouter` reads these straight from `useSearchParams` and conditionally mounts the right modal. There is deliberately no slice for it: ephemeral view state already fully represented by the URL doesn't need a second home.
+
+`UrlSyncProvider`'s two effects:
+
+- **URL → store:** on a `useSearchParams()` change, `parseUrlState` reads country / year / q / mode / sort and dispatches `setAllFromUrl` / `setSort`. Invalid values are silently dropped — a bad pasted link never crashes the app.
+- **Store → URL:** when those slices change, state is serialized and pushed via `setSearchParams(…, { replace: true })` — _replace_, not push, so a keystroke doesn't spam the history stack.
 
 Two guards keep it stable:
 
