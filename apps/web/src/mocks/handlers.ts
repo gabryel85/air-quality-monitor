@@ -3,7 +3,7 @@
  *
  * Failure simulation:
  *   - Random delay 200-800ms on stats endpoint
- *   - Fault mode (see faultMode.ts) fails every endpoint with 503
+ *   - Fault mode (see faultMode.ts) fails selected endpoints with 503
  *   - Optional `?forceError=1` returns 503 (manual retry-path testing)
  *   - Deterministic 10% per measurement value is null (sensor failure)
  *   - Deterministic 10% of rows omitted (station failure)
@@ -13,7 +13,7 @@
 
 import { delay, http, HttpResponse } from 'msw';
 
-import { isFaultMode } from './faultMode';
+import { isFaulty } from './faultMode';
 import { createNote, DbUnavailableError, getNote, listNotes, updateNote } from './notesDb';
 import { generateSeries } from './series';
 import { CITIES_BY_COUNTRY, COUNTRIES, getBaseValues, YEARS_BY_COUNTRY } from './seed';
@@ -83,7 +83,7 @@ export const handlers = [
    * --------------------------------------------------------- */
   http.get('/api/countries', async () => {
     await delay('real');
-    if (isFaultMode()) return faultResponse();
+    if (isFaulty('countries')) return faultResponse();
     return HttpResponse.json<CountryDto[]>(COUNTRIES);
   }),
 
@@ -92,7 +92,7 @@ export const handlers = [
    * --------------------------------------------------------- */
   http.get('/api/countries/:countryId/years', async ({ params }) => {
     await delay('real');
-    if (isFaultMode()) return faultResponse();
+    if (isFaulty('years')) return faultResponse();
     const countryId = String(params['countryId']);
     const years = YEARS_BY_COUNTRY[countryId];
     if (!years) {
@@ -109,7 +109,7 @@ export const handlers = [
    * --------------------------------------------------------- */
   http.get('/api/country/:countryId/cities/stats/24H', async ({ params, request }) => {
     await delay(randomDelay());
-    if (isFaultMode()) return faultResponse();
+    if (isFaulty('stats')) return faultResponse();
 
     const url = new URL(request.url);
 
@@ -155,7 +155,7 @@ export const handlers = [
    * --------------------------------------------------------- */
   http.get('/api/cities/:cityId', async ({ params }) => {
     await delay('real');
-    if (isFaultMode()) return faultResponse();
+    if (isFaulty('city')) return faultResponse();
     const city = findCity(String(params['cityId']));
     if (!city) return HttpResponse.json({ message: 'City not found' }, { status: 404 });
     return HttpResponse.json<CityDto>(city);
@@ -170,7 +170,7 @@ export const handlers = [
    * --------------------------------------------------------- */
   http.get('/api/cities/:cityId/series', async ({ params, request }) => {
     await delay(randomDelay());
-    if (isFaultMode()) return faultResponse();
+    if (isFaulty('series')) return faultResponse();
 
     const cityId = String(params['cityId']);
     const city = findCity(cityId);
@@ -203,7 +203,7 @@ export const handlers = [
    * --------------------------------------------------------- */
   http.get('/api/cities/:cityId/notes', async ({ params, request }) => {
     await delay('real');
-    if (isFaultMode()) return faultResponse();
+    if (isFaulty('notes')) return faultResponse();
     const cityId = String(params['cityId']);
     const cursor = new URL(request.url).searchParams.get('cursor');
 
@@ -224,7 +224,7 @@ export const handlers = [
    * --------------------------------------------------------- */
   http.get('/api/cities/:cityId/notes/:noteId', async ({ params }) => {
     await delay('real');
-    if (isFaultMode()) return faultResponse();
+    if (isFaulty('notes')) return faultResponse();
     try {
       const note = await getNote(String(params['cityId']), Number(params['noteId']));
       if (!note) return HttpResponse.json({ message: 'Note not found' }, { status: 404 });
@@ -239,7 +239,7 @@ export const handlers = [
    * --------------------------------------------------------- */
   http.post('/api/cities/:cityId/notes', async ({ params, request }) => {
     await delay(randomDelay());
-    if (isFaultMode()) return faultResponse();
+    if (isFaulty('noteMutations')) return faultResponse();
 
     const cityId = String(params['cityId']);
     if (!findCity(cityId)) {
@@ -268,7 +268,7 @@ export const handlers = [
    * --------------------------------------------------------- */
   http.patch('/api/cities/:cityId/notes/:noteId', async ({ params, request }) => {
     await delay(randomDelay());
-    if (isFaultMode()) return faultResponse();
+    if (isFaulty('noteMutations')) return faultResponse();
 
     const body = (await request.json()) as UpdateNoteInput;
     if (!body.content || body.content.trim().length < 1) {

@@ -103,9 +103,17 @@
   },
   "faultMode": {
     "label": "Error simulation",
-    "description": "Make the mock API return errors so you can test the unhappy path.",
-    "ariaLabel": "Toggle error simulation",
-    "onTitle": "Error simulation: on",
-    "offTitle": "Error simulation: off"
+    "description": "Pick which mock endpoints fail with 503 to test the unhappy path.",
+    "ariaLabel": "Choose which mocks fail",
+    "all": "All endpoints",
+    "targets": {
+      "countries": "Countries list",
+      "years": "Years list",
+      "stats": "City measurements (table)",
+      "city": "City details",
+      "series": "Trend chart",
+      "notes": "Notes list",
+      "noteMutations": "Saving notes"
+    }
   }
 }

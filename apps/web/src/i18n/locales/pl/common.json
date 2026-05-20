@@ -103,9 +103,17 @@
   },
   "faultMode": {
     "label": "Symulacja błędów",
-    "description": "Sprawia, że mockowe API zwraca błędy — pozwala przetestować ścieżkę błędów.",
-    "ariaLabel": "Przełącz symulację błędów",
-    "onTitle": "Symulacja błędów: włączona",
-    "offTitle": "Symulacja błędów: wyłączona"
+    "description": "Wybierz, które mockowe endpointy mają zwracać błąd 503, aby przetestować ścieżkę błędów.",
+    "ariaLabel": "Wybierz, które mocki mają zawodzić",
+    "all": "Wszystkie endpointy",
+    "targets": {
+      "countries": "Lista krajów",
+      "years": "Lista lat",
+      "stats": "Pomiary miast (tabela)",
+      "city": "Szczegóły miasta",
+      "series": "Wykres trendu",
+      "notes": "Lista notatek",
+      "noteMutations": "Zapis notatek"
+    }
   }
 }

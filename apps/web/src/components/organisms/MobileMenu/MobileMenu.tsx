@@ -13,9 +13,8 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/atoms/Button';
-import { Switch } from '@/components/atoms/Switch';
 import { PollingIndicator } from '@/components/molecules/PollingIndicator';
-import { useFaultMode } from '@/features/mock-db/useFaultMode';
+import { FaultModePanel } from '@/features/mock-db/FaultModePanel';
 import { useResetDb } from '@/features/mock-db/useResetDb';
 import type { ThemePreference } from '@/features/theme/types';
 import { useTheme } from '@/features/theme/useTheme';
@@ -102,7 +101,6 @@ export function MobileMenu({
   const { t, i18n } = useTranslation();
   const { preference, setPreference } = useTheme();
   const { status: resetStatus, reset } = useResetDb();
-  const { enabled: faultEnabled, setEnabled: setFaultEnabled } = useFaultMode();
   const [open, setOpen] = useState(false);
   const [confirmingReset, setConfirmingReset] = useState(false);
 
@@ -216,22 +214,10 @@ export function MobileMenu({
             </Section>
 
             <Section title={t('menu.testing')}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p id="aqm-fault-mode" className="text-ink-primary text-sm font-medium">
-                    {t('faultMode.label')}
-                  </p>
-                  <p className="text-ink-tertiary mt-0.5 text-xs leading-snug">
-                    {t('faultMode.description')}
-                  </p>
-                </div>
-                <Switch
-                  checked={faultEnabled}
-                  onCheckedChange={setFaultEnabled}
-                  tone="error"
-                  aria-labelledby="aqm-fault-mode"
-                />
-              </div>
+              <p className="text-ink-tertiary -mt-0.5 text-xs leading-snug">
+                {t('faultMode.description')}
+              </p>
+              <FaultModePanel />
             </Section>
 
             <Section title={t('menu.data')}>

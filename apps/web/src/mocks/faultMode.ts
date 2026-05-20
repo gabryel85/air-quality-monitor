@@ -1,32 +1,81 @@
 /**
- * Fault mode — a global switch that makes every mock endpoint fail with 503.
+ * Fault mode — per-endpoint switches that make chosen mock endpoints fail
+ * with 503. Lets the UI be exercised against its unhappy paths (loading →
+ * retry → error) one area at a time.
  *
- * Lets the UI be exercised against its unhappy paths (loading → retry →
- * error states) on demand. The choice is persisted so it survives a reload;
- * handlers read it per request and the UI toggles it via useFaultMode.
+ * It is a small external store: MSW handlers read it synchronously per
+ * request; React components subscribe via useSyncExternalStore (useFaults).
+ * The selection is persisted so it survives a reload.
  */
 
-const STORAGE_KEY = 'aqm-fault-mode';
+export const FAULT_TARGETS = [
+  'countries',
+  'years',
+  'stats',
+  'city',
+  'series',
+  'notes',
+  'noteMutations',
+] as const;
 
-function readPersisted(): boolean {
+export type FaultTarget = (typeof FAULT_TARGETS)[number];
+
+const STORAGE_KEY = 'aqm-faults';
+
+function isFaultTarget(value: unknown): value is FaultTarget {
+  return typeof value === 'string' && (FAULT_TARGETS as readonly string[]).includes(value);
+}
+
+function readPersisted(): ReadonlySet<FaultTarget> {
   try {
-    return localStorage.getItem(STORAGE_KEY) === '1';
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw === null) return new Set();
+    const parsed: unknown = JSON.parse(raw);
+    return new Set(Array.isArray(parsed) ? parsed.filter(isFaultTarget) : []);
   } catch {
-    return false;
+    return new Set();
   }
 }
 
-let faultMode = typeof localStorage !== 'undefined' ? readPersisted() : false;
+let faults: ReadonlySet<FaultTarget> =
+  typeof localStorage !== 'undefined' ? readPersisted() : new Set();
 
-export function isFaultMode(): boolean {
-  return faultMode;
+const listeners = new Set<() => void>();
+
+function commit(next: ReadonlySet<FaultTarget>): void {
+  faults = next;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));
+  } catch {
+    /* storage unavailable — the in-memory set still works this session */
+  }
+  for (const listener of listeners) listener();
 }
 
-export function setFaultMode(next: boolean): void {
-  faultMode = next;
-  try {
-    localStorage.setItem(STORAGE_KEY, next ? '1' : '0');
-  } catch {
-    /* storage unavailable — the in-memory flag still works for this session */
-  }
+/** Synchronous read for MSW handlers. */
+export function isFaulty(target: FaultTarget): boolean {
+  return faults.has(target);
+}
+
+/** Snapshot for useSyncExternalStore — stable reference until a mutation. */
+export function getFaults(): ReadonlySet<FaultTarget> {
+  return faults;
+}
+
+export function subscribeFaults(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+export function setFault(target: FaultTarget, on: boolean): void {
+  const next = new Set(faults);
+  if (on) next.add(target);
+  else next.delete(target);
+  commit(next);
+}
+
+export function setAllFaults(on: boolean): void {
+  commit(on ? new Set(FAULT_TARGETS) : new Set());
 }
