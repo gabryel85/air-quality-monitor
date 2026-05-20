@@ -131,5 +131,32 @@
       "body": "Dodaj pierwszą notatkę kontekstową dla tego miasta."
     },
     "deleteConfirm": "Usunąć tę notatkę na stałe?"
+  },
+  "onboarding": {
+    "welcomeTitle": "Skonfigurujmy Twój pulpit",
+    "welcomeSubtitle": "Kilka szybkich wyborów i gotowe.",
+    "detecting": "Wykrywanie Twojej lokalizacji…",
+    "stepCountry": "Kraj",
+    "stepYear": "Rok",
+    "stepCity": "Miasto",
+    "countryHeading": "Gdzie chcesz sprawdzić jakość powietrza?",
+    "weThinkYoureIn": "Wygląda na to, że jesteś w",
+    "chooseCountry": "Wybrany kraj",
+    "suggestionIp": "Na podstawie Twojego adresu IP",
+    "suggestionTimezone": "Na podstawie Twojej strefy czasowej",
+    "suggestionDefault": "Dobre miejsce na start",
+    "orPickAnother": "…lub wybierz inny kraj",
+    "yearHeading": "Który rok?",
+    "yearSubtitle": "Bieżący rok aktualizuje się na żywo; wcześniejsze to zarchiwizowane migawki.",
+    "yearLive": "Na żywo",
+    "yearArchive": "Archiwum",
+    "cityHeading": "Przejść od razu do miasta?",
+    "citySubtitle": "Opcjonalnie — otwórz trend zanieczyszczeń i notatki miasta, albo pomiń i przejdź do pełnej tabeli.",
+    "skipCity": "Nie wybieraj nic, aby przejść do pełnej tabeli pulpitu.",
+    "back": "Wstecz",
+    "next": "Dalej",
+    "finish": "Pokaż pulpit",
+    "openCity": "Otwórz {{city}}",
+    "skipSetup": "Pomiń konfigurację"
   }
 }

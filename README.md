@@ -1,8 +1,8 @@
 # Air Quality Monitor
 
 [![CI](https://github.com/gabryel85/air-quality-monitor/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gabryel85/air-quality-monitor/actions/workflows/ci.yml)
-![Coverage](https://img.shields.io/badge/coverage-71%25-yellowgreen?logo=vitest&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-84%20passing-brightgreen?logo=vitest&logoColor=white)
+![Coverage](https://img.shields.io/badge/coverage-72%25-yellowgreen?logo=vitest&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-86%20passing-brightgreen?logo=vitest&logoColor=white)
 ![Node](https://img.shields.io/badge/node-%E2%89%A520-339933?logo=node.js&logoColor=white)
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)

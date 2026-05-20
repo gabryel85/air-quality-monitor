@@ -131,5 +131,32 @@
       "body": "Add the first context note for this city."
     },
     "deleteConfirm": "Delete this note permanently?"
+  },
+  "onboarding": {
+    "welcomeTitle": "Let's set up your dashboard",
+    "welcomeSubtitle": "A couple of quick choices and you're in.",
+    "detecting": "Detecting your location…",
+    "stepCountry": "Country",
+    "stepYear": "Year",
+    "stepCity": "City",
+    "countryHeading": "Where do you want to look?",
+    "weThinkYoureIn": "We think you're in",
+    "chooseCountry": "Selected country",
+    "suggestionIp": "Based on your IP address",
+    "suggestionTimezone": "Based on your timezone",
+    "suggestionDefault": "A good place to start",
+    "orPickAnother": "…or pick another country",
+    "yearHeading": "Which year?",
+    "yearSubtitle": "The current year updates live; earlier years are archived snapshots.",
+    "yearLive": "Live",
+    "yearArchive": "Archive",
+    "cityHeading": "Jump straight to a city?",
+    "citySubtitle": "Optional — open a city's pollution trend and notes, or skip to the full table.",
+    "skipCity": "Pick none to land on the full dashboard table.",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Show dashboard",
+    "openCity": "Open {{city}}",
+    "skipSetup": "Skip setup"
   }
 }

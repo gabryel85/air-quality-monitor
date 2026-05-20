@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/molecules/EmptyState';
 import { ErrorState } from '@/components/molecules/ErrorState';
 import { CitiesTable } from '@/features/cities/CitiesTable';
 import { useGetCitiesStatsQuery } from '@/features/cities/citiesApi';
+import { OnboardingWizard } from '@/features/onboarding/OnboardingWizard';
 
 /**
  * Lazy BarChart so the visx tree (~70 KB gzipped) only ships when the
@@ -51,22 +52,25 @@ export function DashboardPage() {
         <p className="text-ink-secondary mt-1 text-base">{t('app.subtitle')}</p>
       </header>
 
-      <Toolbar />
-
-      <DashboardBody
-        hasSelection={hasSelection}
-        isLoading={isLoading}
-        error={error}
-        visibleCount={visibleCount}
-        chartData={chartData}
-        onRetry={() => void refetch()}
-      />
+      {hasSelection ? (
+        <>
+          <Toolbar />
+          <DashboardBody
+            isLoading={isLoading}
+            error={error}
+            visibleCount={visibleCount}
+            chartData={chartData}
+            onRetry={() => void refetch()}
+          />
+        </>
+      ) : (
+        <OnboardingWizard />
+      )}
     </section>
   );
 }
 
 interface DashboardBodyProps {
-  readonly hasSelection: boolean;
   readonly isLoading: boolean;
   readonly error: unknown;
   readonly visibleCount: number;
@@ -74,18 +78,7 @@ interface DashboardBodyProps {
   readonly onRetry: () => void;
 }
 
-function DashboardBody({
-  hasSelection,
-  isLoading,
-  error,
-  visibleCount,
-  chartData,
-  onRetry,
-}: DashboardBodyProps) {
-  if (!hasSelection) {
-    return <EmptyState kind="noSelection" />;
-  }
-
+function DashboardBody({ isLoading, error, visibleCount, chartData, onRetry }: DashboardBodyProps) {
   if (error) {
     return <ErrorState onRetry={onRetry} technicalDetail={error} />;
   }
