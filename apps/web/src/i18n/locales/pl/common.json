@@ -28,7 +28,9 @@
     "matchMode": "Tryb",
     "matchContains": "Zawiera",
     "matchExact": "Dokładnie",
-    "matchStartsWith": "Zaczyna się"
+    "matchStartsWith": "Zaczyna się",
+    "searchCountry": "Szukaj kraju…",
+    "noCountryFound": "Nie znaleziono kraju"
   },
   "states": {
     "loading": "Ładowanie danych…",

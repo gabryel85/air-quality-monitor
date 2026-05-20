@@ -28,7 +28,9 @@
     "matchMode": "Match",
     "matchContains": "Contains",
     "matchExact": "Exact",
-    "matchStartsWith": "Starts with"
+    "matchStartsWith": "Starts with",
+    "searchCountry": "Search country…",
+    "noCountryFound": "No country found"
   },
   "states": {
     "loading": "Loading data…",
