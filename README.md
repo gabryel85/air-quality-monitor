@@ -5,7 +5,7 @@
 > Frontend recruitment task — air quality measurement dashboard for European cities.
 > Built with React 19 + TypeScript (strict) + Redux Toolkit + RTK Query + Reselect + visx + Tailwind + MSW.
 
-**Live demo:** **https://air-quality-monitor-web-xdym.vercel.app/dashboard**
+**Live demo:** **https://air-quality-monitor-web-xdym.vercel.app**
 (Vercel auto-deploys on every push to `main`.)
 
 ---
