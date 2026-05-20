@@ -33,6 +33,13 @@ const PARAM = {
   sort: 'sort',
 } as const;
 
+/**
+ * Search-param keys owned by the filter sync. UrlSyncProvider rewrites only
+ * these on a Redux→URL write and preserves every other param (e.g. the note
+ * modal's `modal` / `noteId`), so deep-linked modals survive the sync.
+ */
+export const FILTER_PARAM_KEYS: readonly string[] = Object.values(PARAM);
+
 // ============================================================
 // Serialize: state → search-string
 // ============================================================

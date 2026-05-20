@@ -61,3 +61,20 @@ describe('NotesPage — create note flow', () => {
     expect(matches.length).toBeGreaterThan(0);
   });
 });
+
+describe('NotesPage — deep-linked modal', () => {
+  it('opens the modal from a ?modal=new URL and survives the filter URL sync', async () => {
+    // The modal must render from the URL alone. UrlSyncProvider's Redux→URL
+    // write previously rewrote the whole search string and wiped `modal`;
+    // findByRole only resolves once effects (incl. that sync) have flushed.
+    const utils = renderWithProviders(
+      <Routes>
+        <Route path="/cities/:cityId/notes" element={<NotesPage />} />
+      </Routes>,
+      { initialRoute: '/cities/krakow/notes?modal=new' },
+    );
+
+    const dialog = await utils.findByRole('dialog');
+    expect(within(dialog).getByLabelText(/Tytuł|Title/)).toBeInTheDocument();
+  });
+});

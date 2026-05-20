@@ -19,7 +19,7 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { setSort } from '@/features/cities/tableSlice';
 import { setAllFromUrl } from '@/features/filters/filtersSlice';
 
-import { parseUrlState, serializeUrlState } from './urlState';
+import { FILTER_PARAM_KEYS, parseUrlState, serializeUrlState } from './urlState';
 
 export function UrlSyncProvider({ children }: { readonly children: ReactNode }) {
   const dispatch = useAppDispatch();
@@ -65,12 +65,20 @@ export function UrlSyncProvider({ children }: { readonly children: ReactNode }) 
   // Diff against the current URL to avoid no-op writes.
   useEffect(() => {
     if (!hasReadInitialUrl) return;
-    const desired = serializeUrlState({ ...filters, sort });
-    const current = `?${searchParams.toString()}`;
-    const normalizedCurrent = current === '?' ? '' : current;
-    if (desired !== normalizedCurrent) {
-      lastWrittenRef.current = desired;
-      const next = new URLSearchParams(desired.startsWith('?') ? desired.slice(1) : desired);
+
+    // Rewrite only the filter-owned keys; keep every other param (the note
+    // modal's `modal` / `noteId`) so a deep-linked modal isn't wiped.
+    const next = new URLSearchParams(searchParams);
+    for (const key of FILTER_PARAM_KEYS) next.delete(key);
+    const filterQs = serializeUrlState({ ...filters, sort }).replace(/^\?/, '');
+    for (const [key, value] of new URLSearchParams(filterQs)) {
+      next.set(key, value);
+    }
+    next.sort();
+
+    const desired = next.toString();
+    if (desired !== searchParams.toString()) {
+      lastWrittenRef.current = `?${desired}`;
       setSearchParams(next, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
