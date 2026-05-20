@@ -1,12 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm --filter @aqm/web build",
+  "buildCommand": "pnpm build",
   "outputDirectory": "dist",
   "installCommand": "pnpm install --frozen-lockfile --ignore-scripts && pnpm rebuild esbuild msw",
   "framework": null,
   "rewrites": [
     {
-      "source": "/((?!api|_next|mockServiceWorker.js|assets|favicon.ico|favicon.svg|icons.svg).*)",
+      "source": "/((?!api|assets|mockServiceWorker.js|favicon.ico|favicon.svg|icons.svg).*)",
       "destination": "/index.html"
     }
   ],
