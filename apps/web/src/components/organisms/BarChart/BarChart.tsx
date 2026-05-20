@@ -45,15 +45,21 @@ export interface BarChartProps {
   readonly formatValue?: (value: number) => string;
 }
 
-/** Margins for SVG axes. Tighter on narrow viewports to give bars more room. */
+/** Margins for SVG axes. Tighter on narrow viewports to give bars more room.
+ *  Bottom is generous — the city labels are rotated and need vertical room. */
 function getMargin(width: number): { top: number; right: number; bottom: number; left: number } {
   const narrow = width < 480;
   return {
     top: 12,
     right: 8,
-    bottom: narrow ? 48 : 56,
+    bottom: narrow ? 64 : 72,
     left: narrow ? 38 : 56,
   };
+}
+
+/** Axis labels truncate long city names; the bar tooltip has the full name. */
+function truncateLabel(label: string): string {
+  return label.length > 16 ? `${label.slice(0, 15)}…` : label;
 }
 
 const TOOLTIP_STYLES: CSSProperties = {
@@ -304,12 +310,16 @@ function BarChartCanvas({ data, width, height, formatValue, yAxisLabel }: BarCha
             scale={xScale}
             stroke="var(--color-chart-axis)"
             tickStroke="var(--color-chart-axis)"
-            tickFormat={(key) => data.find((d) => d.key === key)?.label ?? key}
+            tickFormat={(key) => truncateLabel(data.find((d) => d.key === key)?.label ?? key)}
             tickLabelProps={{
               fill: 'var(--color-chart-axis)',
               fontSize: 11,
               textAnchor: 'end',
-              transform: 'rotate(-30) translate(-6, 0)',
+              // `angle` (handled by @visx/text) rotates around the label's
+              // anchor — unlike a raw `transform: rotate()` which pivots on
+              // the group origin and flings the labels above the axis.
+              angle: -35,
+              dy: '0.1em',
             }}
           />
         </Group>
