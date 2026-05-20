@@ -22,7 +22,7 @@
 
 ## What it does
 
-An analyst picks a country and a year, sees a sortable table of measurement stations (NO₂, CO, PM₁₀) with a synchronized bar chart above it. They can filter cities by name, click into a city to read its notes, add new notes, edit existing ones — and **share any view by copy-pasting the URL**. Polling refreshes data every 20 s without disturbing sort, filter, scroll, or open modals.
+On a first visit a short wizard suggests a country from the visitor's location. From there an analyst picks a country and a year, sees a sortable table of measurement stations (NO₂, CO, PM₁₀) with a synchronized bar chart above it. They can filter cities by name, click into a city to read its notes, add / edit / delete notes — and **share any view by copy-pasting the URL**. Polling refreshes data every 20 s without disturbing sort, filter, scroll, or open modals.
 
 ### Key features
 
@@ -35,6 +35,9 @@ An analyst picks a country and a year, sees a sortable table of measurement stat
 - **Accessible.** Keyboard nav across the whole app, focus rings on every interactive element, `aria-sort` on table columns, `aria-live` regions for loading/filter changes, full focus trap in modals (Radix), `prefers-reduced-motion` honoured.
 - **Brand-tokens.** ING palette via CSS variables; light + dark + auto theme with no flash on first paint.
 - **Bilingual.** Polish + English via `react-i18next`.
+- **Guided first run.** Opening the dashboard with nothing selected shows a three-step wizard (country → year → city); step one pre-fills a country from the visitor's IP, with a timezone + locale fallback.
+- **Notes survive a refresh.** Notes are persisted in the browser via IndexedDB, with a one-click reset/recovery path; everything else is deterministic mock data.
+- **Built-in failure testing.** A per-endpoint fault switch in the header forces any chosen mock endpoint (or all) to return 503, so every loading / retry / error path can be exercised on demand.
 
 ---
 
@@ -47,16 +50,17 @@ pnpm dev            # → http://localhost:5173
 
 That's it. MSW intercepts every `/api/*` call — no real backend needed.
 
-| Command          | What it does                                |
-| ---------------- | ------------------------------------------- |
-| `pnpm dev`       | Vite dev server with MSW worker             |
-| `pnpm build`     | Type-check + production build               |
-| `pnpm preview`   | Serve the production build locally on :4173 |
-| `pnpm test`      | Vitest watch mode                           |
-| `pnpm test:run`  | Vitest once (CI)                            |
-| `pnpm lint`      | ESLint, `--max-warnings=0`                  |
-| `pnpm typecheck` | TypeScript without emitting                 |
-| `pnpm format`    | Prettier --write across the repo            |
+| Command              | What it does                                |
+| -------------------- | ------------------------------------------- |
+| `pnpm dev`           | Vite dev server with MSW worker             |
+| `pnpm build`         | Type-check + production build               |
+| `pnpm preview`       | Serve the production build locally on :4173 |
+| `pnpm test`          | Vitest watch mode                           |
+| `pnpm test:run`      | Vitest once (CI)                            |
+| `pnpm test:coverage` | Vitest once + V8 coverage report            |
+| `pnpm lint`          | ESLint, `--max-warnings=0`                  |
+| `pnpm typecheck`     | TypeScript without emitting                 |
+| `pnpm format`        | Prettier --write across the repo            |
 
 Requires: Node ≥ 20, pnpm ≥ 10 (auto-installed via Corepack).
 
@@ -70,21 +74,24 @@ ing/
 │   ├── src/
 │   │   ├── app/                    Store, router, providers
 │   │   ├── components/             Atomic Design — generic, domain-agnostic
-│   │   │   ├── atoms/              Button, Input, Skeleton, Badge, Spinner, Kbd, Icon
+│   │   │   ├── atoms/              Button, Input, Switch, Skeleton, Badge, Spinner, Kbd, Icon
 │   │   │   ├── molecules/          FormField, Select, Combobox, EmptyState, ErrorState,
 │   │   │   │                       PollingIndicator, ThemeToggle, LanguageToggle
 │   │   │   └── organisms/          Modal, DataTable, BarChart (visx), CityCard, NoteCard,
-│   │   │                           AppHeader, ErrorBoundary fallback
+│   │   │                           AppHeader, MobileMenu, ErrorBoundary fallback
 │   │   ├── features/               Domain-specific wiring
 │   │   │   ├── cities/             API + selectors (Reselect) + CitiesTable + Toolbar
 │   │   │   │                       + CityTrendChart + tableSlice + citySeriesApi
 │   │   │   ├── countries/          API + CountrySelect (combobox) + YearSelect
 │   │   │   ├── filters/            filtersSlice + URL sync (UrlSyncProvider) + CityFilterInput
+│   │   │   ├── mock-db/            Fault-mode switch + IndexedDB reset control
 │   │   │   ├── notes/              API + 3 modals + NoteModalRouter + NotesListInfinite
+│   │   │   ├── onboarding/         Geolocation wizard + IP/timezone detection
 │   │   │   └── theme/              ThemeProvider + useTheme
 │   │   ├── templates/              AppShell
 │   │   ├── pages/                  DashboardPage, NotesPage, NotFoundPage
-│   │   ├── mocks/                  MSW handlers + seed data + chaos simulation
+│   │   ├── mocks/                  MSW handlers + seed data + IndexedDB notes store
+│   │   │                           + deterministic + on-demand fault simulation
 │   │   ├── lib/                    cn, sort (nulls-last), relativeTime, useDebouncedValue
 │   │   ├── i18n/                   PL + EN locales
 │   │   └── styles/                 tokens.css (CSS variables, both themes)
@@ -110,8 +117,8 @@ ing/
        │                                  ├─▶ <CitiesTable>
        │                                  └─▶ <BarChart>
        │
-       └─▶ getNotes (infinite query)
-           createNote / updateNote ──▶ invalidates → list refetches
+       └─▶ getNotes (infinite query)            ──▶ IndexedDB-backed notes
+           createNote / updateNote / deleteNote ──▶ invalidates → list refetches
 
                 URL — the shared source of truth
             ┌──────────────────────────────────────────┐
@@ -139,7 +146,7 @@ Every meaningful piece of state lives in the URL search params — in two tiers:
 `UrlSyncProvider`'s two effects:
 
 - **URL → store:** on a `useSearchParams()` change, `parseUrlState` reads country / year / q / mode / sort and dispatches `setAllFromUrl` / `setSort`. Invalid values are silently dropped — a bad pasted link never crashes the app.
-- **Store → URL:** when those slices change, state is serialized and pushed via `setSearchParams(…, { replace: true })` — _replace_, not push, so a keystroke doesn't spam the history stack.
+- **Store → URL:** when those slices change, state is serialized and pushed via `setSearchParams(…, { replace: true })` — _replace_, not push, so a keystroke doesn't spam the history stack. Only the filter-owned keys are rewritten; `modal` / `noteId` and any other param are preserved, so a deep-linked modal is never wiped by a filter change.
 
 Two guards keep it stable:
 
@@ -182,6 +189,7 @@ The PDF explicitly allowed mocking. I chose MSW because:
 - One install, no separate process to start, no Docker, no migration scripts.
 - It runs the _exact same_ code in dev, prod, and tests.
 - **Deterministic failure simulation.** A hash of `(country, year, city)` decides the 10 % null measurements and 10 % omitted rows — so a sensor failure is _stable_ for a given selection and polling never flickers a station in and out. The 503 retry path is opt-in via `?forceError=1`, not a random 5 %: normal polling stays predictable, yet the error/retry branch is still demonstrable on demand. Only the 200-800 ms response delay is random. This is what stress-tested every loading / error / null / retry branch of the UI.
+- **On-demand fault mode.** A header switch (`faultMode.ts`) makes any chosen endpoint — or all of them — fail with 503, so the unhappy path can be walked through deliberately, not just hit by chance.
 - Vercel deploys it cleanly (service worker static at `/mockServiceWorker.js`).
 
 **Trade-off:** a real backend (NestJS + TypeORM + a database) was an option but would not change what this task is about — the frontend. The time went into frontend depth instead.
@@ -276,6 +284,14 @@ The PDF says "filter by typing any string" → substring matching is the literal
 
 `NotesPage` and `BarChart` (the visx tree) are `React.lazy`; the MSW worker is a dynamic import. `vite.config.ts`'s `manualChunks` splits React / Redux / Radix / visx / i18n / forms into separately-cacheable vendor files, so an app-code fix invalidates `index.js` (~21 KB gz) and nothing else. Match order matters — `react-router` must be tested before the generic `react-dom` substring, or `react-router-dom` is swept into the React chunk (caught by reading the post-build chunk sizes).
 
+### 16. Notes persist in IndexedDB; everything else stays deterministic
+
+Notes are the only user-mutable data, so they get a real browser database (IndexedDB via `idb`) and survive a refresh. Measurements, countries and cities are deterministic — recomputed from seed constants — so they need no storage at all. `localStorage` was rejected: its API is synchronous (blocks the main thread) and its ~5 MB string budget is the wrong shape for a growing record store. If the database can't be opened (corruption, private-browsing mode) the notes view detects the storage error and renders a recovery panel; a header **Reset data** control wipes and re-seeds the store. The store seeds from `initialNotes()` on first visit, and the test runner — which has no IndexedDB — transparently falls back to an in-memory array so the same handlers run everywhere.
+
+### 17. Geolocation-based onboarding wizard
+
+A first visit with nothing selected opens a three-step wizard (country → year → city) instead of a bare empty state. Step one pre-fills a country from the visitor's location: an IP lookup (`ipwho.is`, key-less, CORS-friendly) raced against a 2.5 s timeout, falling back to the browser timezone + locale, then a sensible default — so it always resolves to a country that has data. Finishing dispatches the country/year selection, which swaps the wizard for the normal dashboard; picking a city deep-links straight to its notes. The IP call is skipped under test, keeping the suite offline and deterministic.
+
 ---
 
 ## What I'd add with more time
@@ -288,14 +304,17 @@ The PDF says "filter by typing any string" → substring matching is the literal
 
 ### ✅ Already done — beyond the original brief
 
-| Area                  | What                                                                             |
-| --------------------- | -------------------------------------------------------------------------------- |
-| Code-splitting        | Lazy `NotesPage` + lazy `BarChart` + manual vendor chunks across cacheable files |
-| Integration tests     | RTL + MSW: sort cycle, filter-survives-refetch, note creation flow               |
-| axe-core in tests     | Automated a11y assertions on `DashboardPage` (loaded + empty state)              |
-| Mobile responsive     | Table → cards on `<sm`; chart axis margins adapt on narrow viewports             |
-| Per-city trend chart  | visx time-series (24h / 7d / 30d / year), AQI badge, live vs historical mode     |
-| Searchable country UI | Radix Popover + cmdk combobox; city filter with contains/exact/starts-with modes |
+| Area                  | What                                                                                                     |
+| --------------------- | -------------------------------------------------------------------------------------------------------- |
+| Code-splitting        | Lazy `NotesPage` + lazy `BarChart` + manual vendor chunks across cacheable files                         |
+| Integration tests     | RTL + MSW: sort cycle, filter-survives-refetch, note create/delete, deep-linked modal, onboarding wizard |
+| axe-core in tests     | Automated a11y assertions on `DashboardPage` (loaded + onboarding wizard)                                |
+| Mobile responsive     | Table → cards on `<sm`; chart axis margins adapt; header collapses into a sheet menu                     |
+| Onboarding wizard     | Geolocation-suggested country → year → city, IP lookup with timezone fallback                            |
+| Notes persistence     | IndexedDB-backed notes that survive a refresh, with a reset/recovery path                                |
+| Failure testing       | Per-endpoint fault switch forcing 503s, to walk every loading / retry / error path                       |
+| Per-city trend chart  | visx time-series (24h / 7d / 30d / year), AQI badge, live vs historical mode                             |
+| Searchable country UI | Radix Popover + cmdk combobox; city filter with contains/exact/starts-with modes                         |
 
 ---
 
