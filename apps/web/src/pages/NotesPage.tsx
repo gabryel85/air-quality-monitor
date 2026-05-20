@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 
 import { Button } from '@/components/atoms/Button';
@@ -15,6 +15,7 @@ export function NotesPage() {
   const { t } = useTranslation();
   const { cityId = '' } = useParams<{ cityId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
 
   const { data: city, isError, error, refetch } = useGetCityQuery(cityId, { skip: !cityId });
 
@@ -44,7 +45,7 @@ export function NotesPage() {
     <section aria-labelledby="notes-title" className="flex flex-col gap-6 py-6">
       <header className="flex flex-col gap-3">
         <Link
-          to="/dashboard"
+          to={{ pathname: '/dashboard', search: location.search }}
           className={cn(
             'text-ink-secondary inline-flex w-fit items-center gap-1 text-sm',
             'hover:text-ink-primary',

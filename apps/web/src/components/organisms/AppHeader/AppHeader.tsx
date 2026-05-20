@@ -1,6 +1,6 @@
 import { ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Link, useMatches } from 'react-router-dom';
+import { Link, useLocation, useMatches } from 'react-router-dom';
 
 import { useAppSelector } from '@/app/hooks';
 import { LanguageToggle } from '@/components/molecules/LanguageToggle/LanguageToggle';
@@ -21,6 +21,7 @@ function isRouteHandle(value: unknown): value is RouteHandle {
 export function AppHeader() {
   const { t } = useTranslation();
   const matches = useMatches();
+  const location = useLocation();
 
   // App-wide data-freshness indicator. Reflects the selected year:
   // current year polls (Live), a past year is frozen (Historical).
@@ -54,7 +55,7 @@ export function AppHeader() {
           <ol className="flex items-center gap-1 text-base">
             <li>
               <Link
-                to="/dashboard"
+                to={{ pathname: '/dashboard', search: location.search }}
                 className={cn(
                   '-ml-2 inline-flex items-center gap-2 rounded-md px-2 py-1',
                   'text-ink-primary font-semibold',
@@ -75,7 +76,7 @@ export function AppHeader() {
                   aria-hidden="true"
                 />
                 <Link
-                  to={c.path}
+                  to={{ pathname: c.path, search: location.search }}
                   className={cn(
                     'text-ink-secondary truncate rounded-md px-2 py-1',
                     'hover:bg-subtle hover:text-ink-primary',
