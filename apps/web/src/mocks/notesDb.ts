@@ -17,7 +17,7 @@
  * endpoints turn that into a 503 so the UI can offer a one-click reset.
  */
 
-import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 
 import { initialNotes } from './seed';
 import type { CreateNoteInput, NoteDto, UpdateNoteInput } from './types';
@@ -74,9 +74,15 @@ export function ensureSeeded(): Promise<void> {
 }
 
 /**
- * Wipes the IndexedDB database and re-seeds it from the original sample notes.
+ * Empties the notes store and re-seeds it from the original sample notes.
  * Recovery path for a corrupted store, and the action behind the header
  * "Reset data" button.
+ *
+ * Deliberately clears the object store rather than calling `deleteDB()`:
+ * `deleteDatabase` is blocked indefinitely by any still-open connection
+ * (another tab, or an HMR-orphaned one in dev), which would hang the reset.
+ * Clearing runs in a normal transaction on the live connection and never
+ * blocks.
  */
 export async function resetDb(): Promise<void> {
   seedPromise = null;
@@ -84,15 +90,8 @@ export async function resetDb(): Promise<void> {
     memory = initialNotes();
     return;
   }
-  if (dbPromise) {
-    try {
-      (await dbPromise).close();
-    } catch {
-      // Connection already broken — deleteDB below still clears it.
-    }
-    dbPromise = null;
-  }
-  await deleteDB(DB_NAME);
+  const db = await getDb();
+  await db.clear(STORE);
   await ensureSeeded();
 }
 
