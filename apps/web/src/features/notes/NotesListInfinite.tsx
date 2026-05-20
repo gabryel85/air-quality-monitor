@@ -1,12 +1,23 @@
+import { Trash2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Button } from '@/components/atoms/Button';
 import { EmptyState } from '@/components/molecules/EmptyState';
 import { ErrorState } from '@/components/molecules/ErrorState';
 import { Spinner } from '@/components/atoms/Spinner';
 import { NoteCard } from '@/components/organisms/NoteCard';
+import { useResetDb } from '@/features/mock-db/useResetDb';
 
 import { useGetNotesInfiniteQuery } from './notesApi';
+
+/** True when the failure is a 503 raised because IndexedDB could not be opened. */
+function isStorageError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null || !('data' in error)) return false;
+  const { data } = error;
+  if (typeof data !== 'object' || data === null || !('code' in data)) return false;
+  return data.code === 'storage';
+}
 
 export interface NotesListInfiniteProps {
   readonly cityId: string;
@@ -17,6 +28,7 @@ export interface NotesListInfiniteProps {
 export function NotesListInfinite({ cityId, onOpenDetails, onEdit }: NotesListInfiniteProps) {
   const { t } = useTranslation();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const { status: resetStatus, reset } = useResetDb();
 
   const {
     data,
@@ -60,6 +72,28 @@ export function NotesListInfinite({ cityId, onOpenDetails, onEdit }: NotesListIn
   }
 
   if (isError) {
+    if (isStorageError(error)) {
+      return (
+        <ErrorState
+          title={t('states.storageError.title')}
+          body={t('states.storageError.body')}
+          tip={t('states.storageError.tip')}
+          technicalDetail={error}
+          onRetry={() => void refetch()}
+          action={
+            <Button
+              variant="destructive"
+              size="sm"
+              loading={resetStatus === 'resetting'}
+              leadingIcon={<Trash2 className="h-3.5 w-3.5" />}
+              onClick={() => void reset()}
+            >
+              {t('states.storageError.action')}
+            </Button>
+          }
+        />
+      );
+    }
     return <ErrorState onRetry={() => void refetch()} technicalDetail={error} />;
   }
 

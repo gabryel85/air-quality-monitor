@@ -7,6 +7,7 @@ import { LanguageToggle } from '@/components/molecules/LanguageToggle/LanguageTo
 import { PollingIndicator } from '@/components/molecules/PollingIndicator';
 import { ThemeToggle } from '@/components/molecules/ThemeToggle/ThemeToggle';
 import { selectCitiesError, selectLastUpdatedAt } from '@/features/cities/selectors';
+import { ResetDbButton } from '@/features/mock-db/ResetDbButton';
 import { cn } from '@/lib/utils';
 
 interface RouteHandle {
@@ -96,6 +97,7 @@ export function AppHeader() {
               className="max-sm:hidden"
             />
           ) : null}
+          <ResetDbButton />
           <LanguageToggle />
           <ThemeToggle />
         </div>

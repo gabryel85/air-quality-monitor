@@ -12,7 +12,7 @@
 
 import { delay, http, HttpResponse } from 'msw';
 
-import { createNote, getNote, listNotes, updateNote } from './notesDb';
+import { createNote, DbUnavailableError, getNote, listNotes, updateNote } from './notesDb';
 import { generateSeries } from './series';
 import { CITIES_BY_COUNTRY, COUNTRIES, getBaseValues, YEARS_BY_COUNTRY } from './seed';
 import type {
@@ -48,6 +48,18 @@ function deterministicChance(key: string, rate: number): boolean {
 
 function maybeNull(key: string, value: number): string | null {
   return deterministicChance(key, NULL_RATE) ? null : value.toFixed(2);
+}
+
+/**
+ * Translates an IndexedDB open failure into a 503 carrying `code: 'storage'`
+ * so the notes UI can render a recovery panel instead of a generic error.
+ * Any other error is re-thrown — that's a genuine bug, not an expected state.
+ */
+function storageErrorResponse(error: unknown) {
+  if (error instanceof DbUnavailableError) {
+    return HttpResponse.json({ code: 'storage', message: error.message }, { status: 503 });
+  }
+  throw error;
 }
 
 function findCity(cityId: string): CityDto | undefined {
@@ -182,12 +194,16 @@ export const handlers = [
     const cityId = String(params['cityId']);
     const cursor = new URL(request.url).searchParams.get('cursor');
 
-    const all = await listNotes(cityId); // already sorted newest-first
-    const startIndex = cursor ? all.findIndex((n) => n.createdAt < cursor) : 0;
-    const slice = startIndex === -1 ? [] : all.slice(startIndex, startIndex + NOTES_PAGE_SIZE);
-    const next = slice.length === NOTES_PAGE_SIZE ? (slice.at(-1)?.createdAt ?? null) : null;
+    try {
+      const all = await listNotes(cityId); // already sorted newest-first
+      const startIndex = cursor ? all.findIndex((n) => n.createdAt < cursor) : 0;
+      const slice = startIndex === -1 ? [] : all.slice(startIndex, startIndex + NOTES_PAGE_SIZE);
+      const next = slice.length === NOTES_PAGE_SIZE ? (slice.at(-1)?.createdAt ?? null) : null;
 
-    return HttpResponse.json<NotesPageDto>({ items: slice, nextCursor: next });
+      return HttpResponse.json<NotesPageDto>({ items: slice, nextCursor: next });
+    } catch (error) {
+      return storageErrorResponse(error);
+    }
   }),
 
   /* -----------------------------------------------------------
@@ -195,9 +211,13 @@ export const handlers = [
    * --------------------------------------------------------- */
   http.get('/api/cities/:cityId/notes/:noteId', async ({ params }) => {
     await delay('real');
-    const note = await getNote(String(params['cityId']), Number(params['noteId']));
-    if (!note) return HttpResponse.json({ message: 'Note not found' }, { status: 404 });
-    return HttpResponse.json<NoteDto>(note);
+    try {
+      const note = await getNote(String(params['cityId']), Number(params['noteId']));
+      if (!note) return HttpResponse.json({ message: 'Note not found' }, { status: 404 });
+      return HttpResponse.json<NoteDto>(note);
+    } catch (error) {
+      return storageErrorResponse(error);
+    }
   }),
 
   /* -----------------------------------------------------------
@@ -219,8 +239,12 @@ export const handlers = [
       return HttpResponse.json({ message: 'Content required' }, { status: 400 });
     }
 
-    const note = await createNote(cityId, body);
-    return HttpResponse.json<NoteDto>(note, { status: 201 });
+    try {
+      const note = await createNote(cityId, body);
+      return HttpResponse.json<NoteDto>(note, { status: 201 });
+    } catch (error) {
+      return storageErrorResponse(error);
+    }
   }),
 
   /* -----------------------------------------------------------
@@ -235,9 +259,13 @@ export const handlers = [
       return HttpResponse.json({ message: 'Content required' }, { status: 400 });
     }
 
-    const updated = await updateNote(String(params['cityId']), Number(params['noteId']), body);
-    if (!updated) return HttpResponse.json({ message: 'Note not found' }, { status: 404 });
-    return HttpResponse.json<NoteDto>(updated);
+    try {
+      const updated = await updateNote(String(params['cityId']), Number(params['noteId']), body);
+      if (!updated) return HttpResponse.json({ message: 'Note not found' }, { status: 404 });
+      return HttpResponse.json<NoteDto>(updated);
+    } catch (error) {
+      return storageErrorResponse(error);
+    }
   }),
 ];
 

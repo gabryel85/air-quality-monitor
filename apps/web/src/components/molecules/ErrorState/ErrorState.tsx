@@ -10,7 +10,7 @@
  *   <ErrorState onRetry={refetch} technicalDetail={error} />
  */
 
-import { AlertTriangle, RefreshCcw } from 'lucide-react';
+import { AlertTriangle, Lightbulb, RefreshCcw } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -23,6 +23,8 @@ export interface ErrorStateProps {
   readonly onRetry?: () => void;
   /** Anything inspectable — Error, string, or RTK Query FetchBaseQueryError. */
   readonly technicalDetail?: unknown;
+  /** Optional highlighted hint shown above the actions (e.g. a recovery tip). */
+  readonly tip?: string;
   /** Optional extra action below the retry button. */
   readonly action?: ReactNode;
   readonly className?: string;
@@ -47,6 +49,7 @@ export function ErrorState({
   body,
   onRetry,
   technicalDetail,
+  tip,
   action,
   className,
   compact = false,
@@ -74,6 +77,13 @@ export function ErrorState({
             {titleText}
           </h2>
           <p className="text-ink-secondary mt-1 text-base">{bodyText}</p>
+
+          {tip ? (
+            <p className="bg-subtle text-ink-secondary mt-3 flex items-start gap-2 rounded-md p-3 text-sm">
+              <Lightbulb className="text-accent mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>{tip}</span>
+            </p>
+          ) : null}
 
           {detail ? (
             <details className="text-ink-tertiary mt-3 text-sm">

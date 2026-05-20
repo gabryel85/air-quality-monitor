@@ -13,6 +13,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { App } from './app/App';
+import { ensureSeeded } from './mocks/notesDb';
 
 /** Minimum time the boot splash stays visible — avoids a jarring flash. */
 const MIN_SPLASH_MS = 700;
@@ -29,11 +30,13 @@ const MIN_SPLASH_MS = 700;
 async function bootstrap(): Promise<void> {
   const startedAt = performance.now();
 
-  const [{ enableMocks }, { ensureSeeded }] = await Promise.all([
-    import('./mocks/browser'),
-    import('./mocks/notesDb'),
+  const { enableMocks } = await import('./mocks/browser');
+  await Promise.all([
+    enableMocks(),
+    // A failed seed must not block the mount — the notes view detects the
+    // storage failure and offers a one-click reset.
+    ensureSeeded().catch(() => undefined),
   ]);
-  await Promise.all([enableMocks(), ensureSeeded()]);
 
   const elapsed = performance.now() - startedAt;
   if (elapsed < MIN_SPLASH_MS) {

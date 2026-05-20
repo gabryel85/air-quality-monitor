@@ -66,6 +66,12 @@
       "title": "Nie udało się załadować danych",
       "body": "Wystąpił błąd podczas pobierania pomiarów."
     },
+    "storageError": {
+      "title": "Magazyn notatek niedostępny",
+      "body": "Nie udało się otworzyć bazy danych przeglądarki przechowującej notatki. Może być uszkodzona lub zablokowana przez tryb prywatny.",
+      "tip": "Wyczyszczenie lokalnej bazy notatek zwykle rozwiązuje problem — przywrócone zostaną wtedy przykładowe notatki.",
+      "action": "Usuń dane z IndexedDB"
+    },
     "sensorUnavailable": "Czujnik niedostępny"
   },
   "theme": {
@@ -78,5 +84,13 @@
     "label": "Język",
     "pl": "Polski",
     "en": "Angielski"
+  },
+  "mockDb": {
+    "ariaLabel": "Resetuj dane mockowe",
+    "reset": "Resetuj dane",
+    "resetTitle": "Zresetować dane mockowe?",
+    "resetBody": "Spowoduje to usunięcie notatek zapisanych w przeglądarce i przywrócenie przykładowych notatek. Pomiary jakości powietrza nie zostaną zmienione.",
+    "resetError": "Reset nie powiódł się. Spróbuj ponownie.",
+    "resetDone": "Przywrócono dane mockowe."
   }
 }

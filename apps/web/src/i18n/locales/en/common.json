@@ -66,6 +66,12 @@
       "title": "Couldn't load data",
       "body": "An error occurred while fetching measurements."
     },
+    "storageError": {
+      "title": "Notes storage unavailable",
+      "body": "The browser database that holds your notes could not be opened. It may be corrupted, or blocked by private-browsing mode.",
+      "tip": "Clearing the local notes database fixes this in most cases — the original sample notes are restored afterwards.",
+      "action": "Delete IndexedDB data"
+    },
     "sensorUnavailable": "Sensor unavailable"
   },
   "theme": {
@@ -78,5 +84,13 @@
     "label": "Language",
     "pl": "Polish",
     "en": "English"
+  },
+  "mockDb": {
+    "ariaLabel": "Reset mock data",
+    "reset": "Reset data",
+    "resetTitle": "Reset mock data?",
+    "resetBody": "This deletes the notes saved in your browser and restores the original sample notes. Air-quality measurements are not affected.",
+    "resetError": "Reset failed. Please try again.",
+    "resetDone": "Mock data restored."
   }
 }
