@@ -3,14 +3,13 @@ import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAppSelector } from '@/app/hooks';
-import { PollingIndicator } from '@/components/molecules/PollingIndicator';
 import { CountrySelect } from '@/features/countries/CountrySelect';
 import { YearSelect } from '@/features/countries/YearSelect';
 import { CityFilterInput } from '@/features/filters/CityFilterInput';
 import { cn } from '@/lib/utils';
 
 import { useGetCitiesStatsQuery } from './citiesApi';
-import { selectCitiesError, selectLastUpdatedAt, selectVisibleCityCount } from './selectors';
+import { selectVisibleCityCount } from './selectors';
 
 const POLLING_INTERVAL_MS = 20_000;
 
@@ -35,8 +34,6 @@ export function Toolbar({ className }: ToolbarProps) {
     refetchOnFocus: !isHistorical,
   });
 
-  const lastUpdatedAt = useAppSelector(selectLastUpdatedAt);
-  const error = useAppSelector(selectCitiesError);
   const visibleCount = useAppSelector(selectVisibleCityCount);
 
   const countryFieldId = useId();
@@ -55,13 +52,6 @@ export function Toolbar({ className }: ToolbarProps) {
         <Field label={t('labels.filter')} htmlFor={filterFieldId} className="min-w-[240px] flex-1">
           <CityFilterInput />
         </Field>
-        <div className="ml-auto flex items-center pb-1">
-          <PollingIndicator
-            lastUpdatedAt={lastUpdatedAt}
-            isError={Boolean(error)}
-            isHistorical={isHistorical}
-          />
-        </div>
       </div>
 
       {/* Live region for SR users: announces filter-count changes. */}

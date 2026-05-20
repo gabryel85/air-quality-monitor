@@ -2,8 +2,11 @@ import { ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useMatches } from 'react-router-dom';
 
+import { useAppSelector } from '@/app/hooks';
 import { LanguageToggle } from '@/components/molecules/LanguageToggle/LanguageToggle';
+import { PollingIndicator } from '@/components/molecules/PollingIndicator';
 import { ThemeToggle } from '@/components/molecules/ThemeToggle/ThemeToggle';
+import { selectCitiesError, selectLastUpdatedAt } from '@/features/cities/selectors';
 import { cn } from '@/lib/utils';
 
 interface RouteHandle {
@@ -17,6 +20,16 @@ function isRouteHandle(value: unknown): value is RouteHandle {
 export function AppHeader() {
   const { t } = useTranslation();
   const matches = useMatches();
+
+  // App-wide data-freshness indicator. Reflects the selected year:
+  // current year polls (Live), a past year is frozen (Historical).
+  // Hidden until a country + year are chosen — nothing to indicate yet.
+  const country = useAppSelector((s) => s.filters.country);
+  const year = useAppSelector((s) => s.filters.year);
+  const lastUpdatedAt = useAppSelector(selectLastUpdatedAt);
+  const citiesError = useAppSelector(selectCitiesError);
+  const hasSelection = country !== null && year !== null;
+  const isHistorical = year !== null && year < new Date().getFullYear();
 
   const crumbs = matches
     .map((m) => {
@@ -74,7 +87,15 @@ export function AppHeader() {
             ))}
           </ol>
         </nav>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-3">
+          {hasSelection ? (
+            <PollingIndicator
+              lastUpdatedAt={lastUpdatedAt}
+              isHistorical={isHistorical}
+              isError={Boolean(citiesError)}
+              className="max-sm:hidden"
+            />
+          ) : null}
           <LanguageToggle />
           <ThemeToggle />
         </div>
