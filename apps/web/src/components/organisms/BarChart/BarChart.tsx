@@ -19,7 +19,7 @@ import { AxisBottom, AxisLeft } from '@visx/axis';
 import { Group } from '@visx/group';
 import { ParentSize } from '@visx/responsive';
 import { scaleBand, scaleLinear } from '@visx/scale';
-import { defaultStyles, Tooltip, useTooltip } from '@visx/tooltip';
+import { defaultStyles, useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { useId, useMemo, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -138,10 +138,34 @@ interface BarChartCanvasProps extends Required<Pick<BarChartProps, 'formatValue'
   readonly yAxisLabel?: string;
 }
 
+interface TooltipDatum {
+  readonly label: string;
+  readonly value: number | null;
+}
+
 function BarChartCanvas({ data, width, height, formatValue, yAxisLabel }: BarChartCanvasProps) {
   const { t } = useTranslation();
   const { tooltipOpen, tooltipLeft, tooltipTop, tooltipData, hideTooltip, showTooltip } =
-    useTooltip<{ label: string; value: number | null }>();
+    useTooltip<TooltipDatum>();
+
+  /**
+   * Portal-rendered tooltip. `containerRef` is attached to the <svg>; the
+   * top/left we pass to <TooltipInPortal> are measured relative to that
+   * same element, so the tooltip lands exactly at the cursor regardless of
+   * the figure's padding/border or page scroll. `detectBounds` flips it to
+   * stay inside the viewport near edges.
+   */
+  const { containerRef, TooltipInPortal } = useTooltipInPortal({
+    detectBounds: true,
+    scroll: true,
+  });
+
+  /** Pointer position relative to the svg container. */
+  function pointerInContainer(e: React.MouseEvent<SVGElement>): { x: number; y: number } {
+    const svg = e.currentTarget.ownerSVGElement ?? e.currentTarget;
+    const r = svg.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
 
   const margin = getMargin(width);
   const innerWidth = width - margin.left - margin.right;
@@ -178,7 +202,7 @@ function BarChartCanvas({ data, width, height, formatValue, yAxisLabel }: BarCha
 
   return (
     <>
-      <svg width={width} height={height} aria-hidden="true">
+      <svg ref={containerRef} width={width} height={height} aria-hidden="true">
         <Group left={margin.left} top={margin.top}>
           {/* Horizontal grid lines */}
           {yScale.ticks(4).map((tick) => (
@@ -224,12 +248,10 @@ function BarChartCanvas({ data, width, height, formatValue, yAxisLabel }: BarCha
                 fill="var(--color-chart-bar)"
                 className="duration-slow transition-[fill,y,height] ease-out hover:cursor-pointer"
                 onMouseMove={(e) => {
-                  const svgRect = (
-                    e.currentTarget.ownerSVGElement ?? e.currentTarget
-                  ).getBoundingClientRect();
+                  const p = pointerInContainer(e);
                   showTooltip({
-                    tooltipLeft: e.clientX - svgRect.left,
-                    tooltipTop: e.clientY - svgRect.top,
+                    tooltipLeft: p.x,
+                    tooltipTop: p.y,
                     tooltipData: { label: d.label, value: d.value },
                   });
                 }}
@@ -237,13 +259,13 @@ function BarChartCanvas({ data, width, height, formatValue, yAxisLabel }: BarCha
                   hideTooltip();
                 }}
                 onFocus={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const svgRect = (
-                    e.currentTarget.ownerSVGElement ?? e.currentTarget
-                  ).getBoundingClientRect();
+                  // Keyboard focus: anchor the tooltip at the bar's top-centre.
+                  const svg = e.currentTarget.ownerSVGElement ?? e.currentTarget;
+                  const svgRect = svg.getBoundingClientRect();
+                  const barRect = e.currentTarget.getBoundingClientRect();
                   showTooltip({
-                    tooltipLeft: rect.left + rect.width / 2 - svgRect.left,
-                    tooltipTop: rect.top - svgRect.top,
+                    tooltipLeft: barRect.left + barRect.width / 2 - svgRect.left,
+                    tooltipTop: barRect.top - svgRect.top,
                     tooltipData: { label: d.label, value: d.value },
                   });
                 }}
@@ -294,9 +316,11 @@ function BarChartCanvas({ data, width, height, formatValue, yAxisLabel }: BarCha
       </svg>
 
       {tooltipOpen && tooltipData ? (
-        <Tooltip
-          {...(tooltipTop !== undefined ? { top: tooltipTop } : {})}
-          {...(tooltipLeft !== undefined ? { left: tooltipLeft } : {})}
+        <TooltipInPortal
+          top={tooltipTop ?? 0}
+          left={tooltipLeft ?? 0}
+          offsetLeft={12}
+          offsetTop={12}
           style={TOOLTIP_STYLES}
         >
           <div className="text-ink-primary font-semibold">{tooltipData.label}</div>
@@ -305,7 +329,7 @@ function BarChartCanvas({ data, width, height, formatValue, yAxisLabel }: BarCha
               ? t('states.sensorUnavailable')
               : formatValue(tooltipData.value)}
           </div>
-        </Tooltip>
+        </TooltipInPortal>
       ) : null}
     </>
   );
