@@ -5,7 +5,8 @@
 > Frontend recruitment task — air quality measurement dashboard for European cities.
 > Portfolio-grade implementation: React 19 + TypeScript (max strict) + Redux Toolkit + RTK Query + Reselect + visx + Tailwind + MSW.
 
-**Live demo:** _(Vercel auto-deploys on every push to `main` — URL pasted here after first successful deploy)_
+**Live demo:** **https://air-quality-monitor-web-xdym.vercel.app/dashboard**
+(Vercel auto-deploys on every push to `main`.)
 
 ---
 
@@ -20,6 +21,7 @@ An analyst picks a country and a year, sees a sortable table of measurement stat
 - **Sensor failures are first-class.** Null measurement values render as `—` with a screen-reader-friendly tooltip; entire-station outages drop rows gracefully. Nulls sort last regardless of direction.
 - **Per-city trend chart.** Clicking a city opens its detail with a pollutant time-series (24h / 7d / 30d / yearly), three toggleable lines (NO₂/CO/PM₁₀) and an AQI badge — this is where the "24h" view is genuinely live.
 - **Historical-year guard.** A past year's annual snapshot can't change, so polling is switched off for it and a "closed year — historical data" indicator replaces the live pulse.
+- **Searchable controls.** Country picker is a type-to-filter combobox (matches name _and_ ISO code); the city filter has contains / exact / starts-with modes via an icon toggle inside the field.
 - **Accessible.** Keyboard nav across the whole app, focus rings on every interactive element, `aria-sort` on table columns, `aria-live` regions for loading/filter changes, full focus trap in modals (Radix), `prefers-reduced-motion` honoured.
 - **Brand-tokens.** ING palette via CSS variables; light + dark + auto theme with no flash on first paint.
 - **Bilingual.** Polish + English via `react-i18next`.
@@ -59,14 +61,15 @@ ing/
 │   │   ├── app/                    Store, router, providers
 │   │   ├── components/             Atomic Design — generic, domain-agnostic
 │   │   │   ├── atoms/              Button, Input, Skeleton, Badge, Spinner, Kbd, Icon
-│   │   │   ├── molecules/          FormField, Select, EmptyState, ErrorState, PollingIndicator,
-│   │   │   │                       ThemeToggle, LanguageToggle
-│   │   │   └── organisms/          Modal, DataTable, BarChart (visx), NoteCard, AppHeader,
-│   │   │                           ErrorBoundary fallback
+│   │   │   ├── molecules/          FormField, Select, Combobox, EmptyState, ErrorState,
+│   │   │   │                       PollingIndicator, ThemeToggle, LanguageToggle
+│   │   │   └── organisms/          Modal, DataTable, BarChart (visx), CityCard, NoteCard,
+│   │   │                           AppHeader, ErrorBoundary fallback
 │   │   ├── features/               Domain-specific wiring
-│   │   │   ├── cities/             API + selectors (Reselect) + CitiesTable + Toolbar + tableSlice
-│   │   │   ├── countries/          API + CountrySelect + YearSelect
-│   │   │   ├── filters/            filtersSlice + URL sync (UrlSyncProvider + listeners)
+│   │   │   ├── cities/             API + selectors (Reselect) + CitiesTable + Toolbar
+│   │   │   │                       + CityTrendChart + tableSlice + citySeriesApi
+│   │   │   ├── countries/          API + CountrySelect (combobox) + YearSelect
+│   │   │   ├── filters/            filtersSlice + URL sync (UrlSyncProvider) + CityFilterInput
 │   │   │   ├── notes/              API + 3 modals + NoteModalRouter + NotesListInfinite
 │   │   │   └── theme/              ThemeProvider + useTheme
 │   │   ├── templates/              AppShell
@@ -101,30 +104,35 @@ ing/
            createNote / updateNote ──▶ invalidates → list refetches
 
                 URL ↔ Redux mirror
-            ┌────────────────────────┐
-            │  ?country, ?year, ?q   │
-            │  ?sort, ?modal, ?noteId│
-            └────────────────────────┘
-            (listenerMiddleware writes URL on store actions;
-             UrlSyncProvider reads URL → dispatches to store)
+            ┌─────────────────────────────┐
+            │  ?country ?year ?q ?mode    │
+            │  ?sort  ?modal ?noteId      │
+            └─────────────────────────────┘
+            (UrlSyncProvider — one component, both directions:
+             URL→store on navigation, store→URL on slice change)
 ```
 
 ---
 
-## Decision Log
+## Architecture decisions
 
 > The "why" behind every non-obvious choice — what a recruiter would ask in interview.
 
 ### 1. URL is the source of truth, Redux mirrors it
 
-Every meaningful piece of state (country, year, filter, sort, open modal, selected note) lives in URL search params. `UrlSyncProvider` is a bidirectional sync at the route shell:
+Every meaningful piece of state — country, year, city filter, match mode, sort, and the open note modal — lives in the URL search params. `UrlSyncProvider`, mounted once at the route shell, keeps URL and Redux in sync **both directions** with two effects:
 
-- **URL → store:** `useSearchParams()` change → `parseUrlState` → `dispatch(setAllFromUrl)`.
-- **Store → URL:** `listenerMiddleware` watches filter / sort actions, serializes state, calls `navigate({search}, {replace: true})`.
+- **URL → store:** on a `useSearchParams()` change, `parseUrlState` reads the params and dispatches `setAllFromUrl` / `setSort`. Invalid values are silently dropped — a bad pasted link never crashes the app.
+- **Store → URL:** when the slices change, state is serialized and pushed via `setSearchParams(…, { replace: true })` — _replace_, not push, so a keystroke doesn't spam the history stack.
 
-A `lastWrittenRef` guards against feedback loops. Defaults and empty values are stripped from the URL for cleaner shareable links.
+Two guards keep it stable:
 
-**Why:** Back/forward, refresh, deep-link sharing — all work for free. Polling cannot disturb filter or sort because they aren't part of the fetch lifecycle.
+- a `lastWrittenRef` so a URL the provider just wrote doesn't bounce straight back into the store;
+- a `hasReadInitialUrl` flag so the Store→URL write waits until the initial URL has hydrated Redux — otherwise a deep-linked `?country=PL&year=2025` would be wiped by the empty initial store on first paint.
+
+Defaults and empty values are stripped for clean shareable links. There is **no listener middleware** — sync is entirely component-driven, which keeps the data flow in one readable file.
+
+**Why:** back/forward, refresh, and deep-link sharing all work for free. Polling cannot disturb filter or sort because they aren't part of the fetch lifecycle.
 
 ### 2. RTK Query + Reselect (not "RTK Query OR Reselect")
 
@@ -157,7 +165,7 @@ The PDF explicitly allowed mocking. I chose MSW because:
 
 - One install, no separate process to start, no Docker, no migration scripts.
 - It runs the _exact same_ code in dev, prod, and tests.
-- Chaos is one-liner: random 200-800 ms delay, 5 % chance of 503, 10 % per-measurement nulls, 10 % chance of row omission. This is what stress-tested every loading / error / null / retry branch of the UI.
+- **Deterministic failure simulation.** A hash of `(country, year, city)` decides the 10 % null measurements and 10 % omitted rows — so a sensor failure is _stable_ for a given selection and polling never flickers a station in and out. The 503 retry path is opt-in via `?forceError=1`, not a random 5 %: normal polling stays predictable, yet the error/retry branch is still demonstrable on demand. Only the 200-800 ms response delay is random. This is what stress-tested every loading / error / null / retry branch of the UI.
 - Vercel deploys it cleanly (service worker static at `/mockServiceWorker.js`).
 
 **Trade-off:** I could have spent two days on a NestJS backend with TypeORM and a real DB. The recruiter sees frontend code; deeper FE polish was the better use of the budget.
@@ -240,6 +248,18 @@ The per-city time-series mock (`mocks/series.ts`) is modelled on the **Ambee Air
 
 A real API was considered and rejected for this task: API keys can't ship in a public repo (breaks "clone & run"), no real API matches the PDF's `maxNO2`-per-city-per-year contract (that aggregation is a backend job the brief excludes), and CORS + rate limits + non-determinism would all work against a recruitment reviewer. MSW gives the same realism with none of that.
 
+### 13. Searchable combobox for country, plain select for year
+
+With 13 countries a typeahead-only `<select>` is clumsy. `CountrySelect` is a combobox — **Radix Popover** for the floating panel + focus management, **cmdk** for the filtered, keyboard-navigable list. The filter matches the country name _and_ its ISO code, so typing `PL` finds `Polska`. `YearSelect` stays a plain Radix `Select` — four options, search would add nothing. Right tool per cardinality; both share the same token-styled trigger so they look identical.
+
+### 14. City filter — substring by default, exact / starts-with as modes
+
+The PDF says "filter by typing any string" → substring matching is the literal reading and the default. Exact and starts-with are offered as a bonus, cycled by an **icon button inside the search field** (`✳` contains, `=` exact, `»` starts-with) rather than a separate labelled control — keeps the toolbar uncluttered. The mode is URL state (`?mode=`) like every other filter, so a filtered view is fully shareable.
+
+### 15. Code-splitting — lazy routes + manual vendor chunks
+
+`NotesPage` and `BarChart` (the visx tree) are `React.lazy`; the MSW worker is a dynamic import. `vite.config.ts`'s `manualChunks` splits React / Redux / Radix / visx / i18n / forms into separately-cacheable vendor files, so an app-code fix invalidates `index.js` (~21 KB gz) and nothing else. Match order matters — `react-router` must be tested before the generic `react-dom` substring, or `react-router-dom` is swept into the React chunk (caught by reading the post-build chunk sizes).
+
 ---
 
 ## What I'd add with more time
@@ -250,27 +270,30 @@ A real API was considered and rejected for this task: API keys can't ship in a p
 | Storybook + visual regression | Stories per component, Chromatic snapshots | Component-driven dev demo, regression safety    |
 | Real backend                  | NestJS + Postgres + Auth                   | Would extend further into the "fullstack" claim |
 
-### ✅ Already done
+### ✅ Already done — beyond the original brief
 
-| Area              | What                                                                                                                         |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Code-splitting    | Lazy `NotesPage` + lazy `BarChart` + manual vendor chunks. Initial ~220 KB gz across cacheable chunks (was 226 KB monolith). |
-| Integration tests | RTL + MSW: sort cycle, filter-survives-refetch, note creation flow.                                                          |
-| axe-core in tests | Automated a11y assertions on `DashboardPage` (loaded + empty state).                                                         |
-| Mobile responsive | Table → cards on `<sm`; chart axis margins shrink on narrow viewports.                                                       |
-| Real backend      | NestJS + Postgres + Auth                                                                                                     | Would extend further into the "fullstack" claim |
+| Area                  | What                                                                             |
+| --------------------- | -------------------------------------------------------------------------------- |
+| Code-splitting        | Lazy `NotesPage` + lazy `BarChart` + manual vendor chunks across cacheable files |
+| Integration tests     | RTL + MSW: sort cycle, filter-survives-refetch, note creation flow               |
+| axe-core in tests     | Automated a11y assertions on `DashboardPage` (loaded + empty state)              |
+| Mobile responsive     | Table → cards on `<sm`; chart axis margins adapt on narrow viewports             |
+| Per-city trend chart  | visx time-series (24h / 7d / 30d / year), AQI badge, live vs historical mode     |
+| Searchable country UI | Radix Popover + cmdk combobox; city filter with contains/exact/starts-with modes |
 
 ---
 
 ## Out of scope (per spec)
 
 - Real backend (mocked with MSW per PDF allowance)
-- Real-time updates (PDF explicitly excluded WebSocket / SSE)
-- Historical time-series (only year-snapshot per spec)
+- Real-time updates (PDF explicitly excluded WebSocket / SSE — polling only)
 - Export to CSV/PDF, map view, multi-country comparison
 - Authentication
 - Push / email notifications
 - Rich text or attachments in notes
+
+The dashboard table stays a per-year snapshot as the spec defines; the
+per-city trend chart adds a genuine time-series view on top of that.
 
 ---
 
