@@ -92,5 +92,12 @@
     "resetBody": "This deletes the notes saved in your browser and restores the original sample notes. Air-quality measurements are not affected.",
     "resetError": "Reset failed. Please try again.",
     "resetDone": "Mock data restored."
+  },
+  "menu": {
+    "open": "Open menu",
+    "title": "Menu",
+    "appearance": "Appearance",
+    "language": "Language",
+    "data": "Mock data"
   }
 }

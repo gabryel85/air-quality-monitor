@@ -92,5 +92,12 @@
     "resetBody": "Spowoduje to usunięcie notatek zapisanych w przeglądarce i przywrócenie przykładowych notatek. Pomiary jakości powietrza nie zostaną zmienione.",
     "resetError": "Reset nie powiódł się. Spróbuj ponownie.",
     "resetDone": "Przywrócono dane mockowe."
+  },
+  "menu": {
+    "open": "Otwórz menu",
+    "title": "Menu",
+    "appearance": "Wygląd",
+    "language": "Język",
+    "data": "Dane mockowe"
   }
 }

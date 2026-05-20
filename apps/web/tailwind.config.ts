@@ -222,6 +222,14 @@ const config: Config = {
           from: { opacity: '0', transform: 'translate(-50%, -50%) translateY(6px) scale(0.98)' },
           to: { opacity: '1', transform: 'translate(-50%, -50%) translateY(0) scale(1)' },
         },
+        'sheet-in-right': {
+          from: { transform: 'translateX(100%)' },
+          to: { transform: 'translateX(0)' },
+        },
+        'sheet-out-right': {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(100%)' },
+        },
       },
 
       animation: {
@@ -231,6 +239,8 @@ const config: Config = {
         'fade-out': 'fade-out var(--duration-normal) var(--easing-in)',
         'slide-up-fade': 'slide-up-fade var(--duration-fast) var(--easing-out)',
         'modal-in': 'modal-in var(--duration-fast) var(--easing-out)',
+        'sheet-in-right': 'sheet-in-right var(--duration-normal) var(--easing-out)',
+        'sheet-out-right': 'sheet-out-right var(--duration-fast) var(--easing-in)',
       },
     },
   },

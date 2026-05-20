@@ -6,6 +6,7 @@ import { useAppSelector } from '@/app/hooks';
 import { LanguageToggle } from '@/components/molecules/LanguageToggle/LanguageToggle';
 import { PollingIndicator } from '@/components/molecules/PollingIndicator';
 import { ThemeToggle } from '@/components/molecules/ThemeToggle/ThemeToggle';
+import { MobileMenu } from '@/components/organisms/MobileMenu/MobileMenu';
 import { selectCitiesError, selectLastUpdatedAt } from '@/features/cities/selectors';
 import { ResetDbButton } from '@/features/mock-db/ResetDbButton';
 import { cn } from '@/lib/utils';
@@ -98,9 +99,19 @@ export function AppHeader() {
               className="max-sm:hidden"
             />
           ) : null}
-          <ResetDbButton />
-          <LanguageToggle />
-          <ThemeToggle />
+          {/* Desktop: controls inline. Mobile: collapsed into the sheet menu. */}
+          <div className="hidden items-center gap-3 sm:flex">
+            <ResetDbButton />
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
+          <MobileMenu
+            hasSelection={hasSelection}
+            lastUpdatedAt={lastUpdatedAt}
+            isHistorical={isHistorical}
+            isError={Boolean(citiesError)}
+            className="sm:hidden"
+          />
         </div>
       </div>
     </header>
