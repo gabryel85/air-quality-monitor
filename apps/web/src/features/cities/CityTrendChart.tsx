@@ -18,6 +18,7 @@ import { defaultStyles, useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { useMemo, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useAppSelector } from '@/app/hooks';
 import { Badge, type BadgeVariant } from '@/components/atoms/Badge';
 import { Spinner } from '@/components/atoms/Spinner';
 import { ErrorState } from '@/components/molecules/ErrorState';
@@ -25,6 +26,9 @@ import { cn } from '@/lib/utils';
 import type { AqiCategory, SeriesPointDto, SeriesRange } from '@/mocks/types';
 
 import { useGetCitySeriesQuery } from './citySeriesApi';
+
+/** 24h is the only genuinely live range — poll only that one. */
+const POLL_INTERVAL_MS = 20_000;
 
 type MetricKey = 'no2' | 'co' | 'pm10';
 
@@ -59,10 +63,26 @@ export interface CityTrendChartProps {
 
 export function CityTrendChart({ cityId, className }: CityTrendChartProps) {
   const { t } = useTranslation();
-  const [range, setRange] = useState<SeriesRange>('24h');
+
+  // The dashboard's selected year decides the mode:
+  //   - current year (or none picked) → live: all ranges, 24h polls.
+  //   - past year → historical: locked to that year's monthly view, no poll.
+  // Relative ranges (24h/7d/30d) are "relative to now" and only make sense
+  // for the current year — you can't have "the last 24h of 2024".
+  const selectedYear = useAppSelector((s) => s.filters.year);
+  const currentYear = new Date().getFullYear();
+  const isHistorical = selectedYear !== null && selectedYear < currentYear;
+  const effectiveYear = selectedYear ?? currentYear;
+
+  const [pickedRange, setPickedRange] = useState<SeriesRange>('24h');
   const [hidden, setHidden] = useState<ReadonlySet<MetricKey>>(new Set());
 
-  const { data, isLoading, isError, error, refetch } = useGetCitySeriesQuery({ cityId, range });
+  const range: SeriesRange = isHistorical ? 'year' : pickedRange;
+
+  const { data, isLoading, isError, error, refetch } = useGetCitySeriesQuery(
+    { cityId, range, year: effectiveYear },
+    { pollingInterval: !isHistorical && range === '24h' ? POLL_INTERVAL_MS : 0 },
+  );
 
   const visibleMetrics = METRICS.filter((m) => !hidden.has(m.key));
 
@@ -100,7 +120,13 @@ export function CityTrendChart({ cityId, className }: CityTrendChartProps) {
             </Badge>
           ) : null}
         </div>
-        <RangeSelector range={range} onChange={setRange} />
+        {isHistorical ? (
+          <span className="border-border-subtle bg-subtle text-ink-secondary inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm">
+            {t('labels.rangeYear')} {effectiveYear}
+          </span>
+        ) : (
+          <RangeSelector range={pickedRange} onChange={setPickedRange} />
+        )}
       </header>
 
       <div className="flex flex-wrap gap-1.5">

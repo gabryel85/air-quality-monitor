@@ -139,11 +139,11 @@ export const handlers = [
   }),
 
   /* -----------------------------------------------------------
-   * GET /api/cities/:cityId/series?range=24h|7d|30d|year
+   * GET /api/cities/:cityId/series?range=24h|7d|30d|year&year=YYYY
    *
    * Pollutant time-series, Ambee-history-style. Range governs the
-   * point count + spacing; values follow diurnal/weekly/seasonal
-   * rhythms (see series.ts).
+   * point count + spacing; `year` anchors the `year` range to a
+   * specific calendar year (ignored by the relative ranges).
    * --------------------------------------------------------- */
   http.get('/api/cities/:cityId/series', async ({ params, request }) => {
     await delay(randomDelay());
@@ -152,18 +152,23 @@ export const handlers = [
     const city = findCity(cityId);
     if (!city) return HttpResponse.json({ message: 'City not found' }, { status: 404 });
 
-    const rangeRaw = new URL(request.url).searchParams.get('range') ?? '24h';
+    const url = new URL(request.url);
+    const rangeRaw = url.searchParams.get('range') ?? '24h';
     if (!SERIES_RANGES.has(rangeRaw as SeriesRange)) {
       return HttpResponse.json({ message: 'Invalid range' }, { status: 400 });
     }
     const range = rangeRaw as SeriesRange;
+
+    const yearRaw = url.searchParams.get('year');
+    const parsedYear = yearRaw !== null ? Number(yearRaw) : NaN;
+    const year = Number.isInteger(parsedYear) ? parsedYear : new Date().getFullYear();
 
     return HttpResponse.json<CitySeriesDto>({
       cityId: city.cityId,
       city: city.city,
       countryId: city.countryId,
       range,
-      points: generateSeries(cityId, range, Date.now()),
+      points: generateSeries(cityId, range, Date.now(), year),
     });
   }),
 
