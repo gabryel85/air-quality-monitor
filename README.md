@@ -3,7 +3,7 @@
 [![CI](https://github.com/gabryel85/air-quality-monitor/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gabryel85/air-quality-monitor/actions/workflows/ci.yml)
 
 > Frontend recruitment task — air quality measurement dashboard for European cities.
-> Portfolio-grade implementation: React 19 + TypeScript (max strict) + Redux Toolkit + RTK Query + Reselect + visx + Tailwind + MSW.
+> Built with React 19 + TypeScript (strict) + Redux Toolkit + RTK Query + Reselect + visx + Tailwind + MSW.
 
 **Live demo:** **https://air-quality-monitor-web-xdym.vercel.app/dashboard**
 (Vercel auto-deploys on every push to `main`.)
@@ -117,7 +117,7 @@ ing/
 
 ## Architecture decisions
 
-> The "why" behind every non-obvious choice — what a recruiter would ask in interview.
+> The rationale behind each non-obvious choice.
 
 ### 1. URL is the source of truth
 
@@ -149,7 +149,7 @@ The brief asked for **Redux + Reselect**. I'm using both — but with clearly di
 
 RTK Query internally uses Reselect for endpoint selectors (`endpoint.select(args)(state)`). The explicit `createSelector` chain on top is what tests pin down (`selectors.test.ts`) and what the chart/table consume — memoised by reference, so polling that returns identical data triggers zero re-renders.
 
-**Why this over plain thunks:** Polling, retry, dedup, isLoading vs isFetching are ~150 lines I'd otherwise have to write by hand. The Reselect layer is where the _interesting_ memoised logic lives — that's where the unit tests are.
+**Why this over plain thunks:** polling, retry, dedup, and the `isLoading` vs `isFetching` distinction would otherwise be roughly 150 lines of hand-written boilerplate. The Reselect layer holds the memoised derivation logic, and is covered directly by unit tests (`selectors.test.ts`).
 
 ### 3. Polling-safe UX via `isLoading` vs `isFetching`
 
@@ -174,15 +174,15 @@ The PDF explicitly allowed mocking. I chose MSW because:
 - **Deterministic failure simulation.** A hash of `(country, year, city)` decides the 10 % null measurements and 10 % omitted rows — so a sensor failure is _stable_ for a given selection and polling never flickers a station in and out. The 503 retry path is opt-in via `?forceError=1`, not a random 5 %: normal polling stays predictable, yet the error/retry branch is still demonstrable on demand. Only the 200-800 ms response delay is random. This is what stress-tested every loading / error / null / retry branch of the UI.
 - Vercel deploys it cleanly (service worker static at `/mockServiceWorker.js`).
 
-**Trade-off:** I could have spent two days on a NestJS backend with TypeORM and a real DB. The recruiter sees frontend code; deeper FE polish was the better use of the budget.
+**Trade-off:** a real backend (NestJS + TypeORM + a database) was an option but would not change what this task is about — the frontend. The time went into frontend depth instead.
 
 ### 6. visx instead of Recharts
 
 The bar chart is built directly with `@visx/scale` + `@visx/axis` + `@visx/tooltip`. ~150 lines vs ~30 with Recharts — more code but:
 
-- Precise brand control (ING orange, font sizes match design tokens to the pixel).
-- I show I understand the underlying d3-scale primitives, not just a wrapper.
-- For ~10 bars, the abstraction of a full chart lib was overkill anyway.
+- Precise brand control — ING orange and font sizes map directly to the design tokens, with no chart-library defaults to override.
+- Direct use of the scale/axis primitives keeps full control over rendering and the null-gap handling.
+- For ~10 bars, a full charting library would be more abstraction than the problem needs.
 
 ### 7. Atomic Design + features hybrid
 
@@ -228,9 +228,9 @@ This caught real issues during development (Radix prop types rejected `undefined
 
 ### 10. Polling always-on (no `skipPollingIfUnfocused`)
 
-Conscious decision: `skipPollingIfUnfocused: false`. Defence — this is a **monitoring dashboard for analysts**. They Alt-Tab away to reference docs or Slack, then return; expectation is "the data is current," not "5-minute-old snapshot."
+`skipPollingIfUnfocused: false` is set deliberately. Rationale: this is a monitoring dashboard for analysts who switch away to reference material and return expecting current data, not a several-minutes-old snapshot.
 
-In production with real costs, I'd add a Page Visibility API gate at the 5-minute mark, but for the 20-second cadence here it's the right call.
+In a production system with real request costs, a Page Visibility API gate (pausing after a few minutes idle) would be the next step; at the 20-second cadence here, always-on polling is appropriate.
 
 ### 11. What "24H" means — and the historical-year guard
 
@@ -252,7 +252,7 @@ The genuinely-live "last 24 hours" lives where it belongs — the **per-city tre
 
 The per-city time-series mock (`mocks/series.ts`) is modelled on the **Ambee Air Quality `history` endpoint**: time-stamped points, per-pollutant values, a composite `AQI`, and an `aqiInfo.category`. Values follow real rhythms — diurnal rush-hour peaks, weekend dips, winter heating-season highs — and are deterministic per `(city, timestamp)` so polling never makes the chart jump.
 
-A real API was considered and rejected for this task: API keys can't ship in a public repo (breaks "clone & run"), no real API matches the PDF's `maxNO2`-per-city-per-year contract (that aggregation is a backend job the brief excludes), and CORS + rate limits + non-determinism would all work against a recruitment reviewer. MSW gives the same realism with none of that.
+A real API was considered and rejected for this task: API keys cannot ship in a public repository (it breaks "clone & run"), no real API matches the PDF's `maxNO2`-per-city-per-year contract (that aggregation is a backend job the brief excludes), and CORS, rate limits, and non-determinism would all undermine a clean clone-and-run experience. MSW provides the same realism without any of that.
 
 ### 13. Searchable combobox for country, plain select for year
 
