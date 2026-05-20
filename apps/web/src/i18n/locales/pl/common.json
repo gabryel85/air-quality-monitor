@@ -12,7 +12,8 @@
     "clearFilter": "Wyczyść filtr",
     "details": "Szczegóły",
     "edit": "Edytuj",
-    "newNote": "Nowa notatka"
+    "newNote": "Nowa notatka",
+    "goToCurrentYear": "Przejdź do {{year}}"
   },
   "labels": {
     "country": "Kraj",

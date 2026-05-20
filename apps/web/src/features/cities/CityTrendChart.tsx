@@ -18,10 +18,13 @@ import { defaultStyles, useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { useMemo, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useAppSelector } from '@/app/hooks';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { Badge, type BadgeVariant } from '@/components/atoms/Badge';
+import { Button } from '@/components/atoms/Button';
 import { Spinner } from '@/components/atoms/Spinner';
 import { ErrorState } from '@/components/molecules/ErrorState';
+import { PollingIndicator } from '@/components/molecules/PollingIndicator';
+import { setYear } from '@/features/filters/filtersSlice';
 import { cn } from '@/lib/utils';
 import type { AqiCategory, SeriesPointDto, SeriesRange } from '@/mocks/types';
 
@@ -63,6 +66,7 @@ export interface CityTrendChartProps {
 
 export function CityTrendChart({ cityId, className }: CityTrendChartProps) {
   const { t } = useTranslation();
+  const dispatch = useAppDispatch();
 
   // The dashboard's selected year decides the mode:
   //   - current year (or none picked) → live: all ranges, 24h polls.
@@ -79,7 +83,7 @@ export function CityTrendChart({ cityId, className }: CityTrendChartProps) {
 
   const range: SeriesRange = isHistorical ? 'year' : pickedRange;
 
-  const { data, isLoading, isError, error, refetch } = useGetCitySeriesQuery(
+  const { data, isLoading, isError, error, refetch, fulfilledTimeStamp } = useGetCitySeriesQuery(
     { cityId, range, year: effectiveYear },
     { pollingInterval: !isHistorical && range === '24h' ? POLL_INTERVAL_MS : 0 },
   );
@@ -120,13 +124,21 @@ export function CityTrendChart({ cityId, className }: CityTrendChartProps) {
             </Badge>
           ) : null}
         </div>
-        {isHistorical ? (
-          <span className="border-border-subtle bg-subtle text-ink-secondary inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm">
-            {t('labels.rangeYear')} {effectiveYear}
-          </span>
-        ) : (
-          <RangeSelector range={pickedRange} onChange={setPickedRange} />
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Same live/historical state indicator as the dashboard toolbar. */}
+          <PollingIndicator
+            lastUpdatedAt={fulfilledTimeStamp ?? null}
+            isHistorical={isHistorical}
+            isError={isError}
+          />
+          {isHistorical ? (
+            <Button variant="secondary" size="sm" onClick={() => dispatch(setYear(currentYear))}>
+              {t('actions.goToCurrentYear', { year: currentYear })}
+            </Button>
+          ) : (
+            <RangeSelector range={pickedRange} onChange={setPickedRange} />
+          )}
+        </div>
       </header>
 
       <div className="flex flex-wrap gap-1.5">

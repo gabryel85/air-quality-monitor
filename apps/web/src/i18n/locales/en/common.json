@@ -12,7 +12,8 @@
     "clearFilter": "Clear filter",
     "details": "Details",
     "edit": "Edit",
-    "newNote": "New note"
+    "newNote": "New note",
+    "goToCurrentYear": "Go to {{year}}"
   },
   "labels": {
     "country": "Country",
