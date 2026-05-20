@@ -30,8 +30,11 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      # pnpm 11 blocks dependency build scripts by default and exits non-zero
+      # on ignored builds. Skip all lifecycle scripts, then explicitly rebuild
+      # the two that genuinely need it (esbuild's binary, msw's worker).
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts && pnpm rebuild esbuild msw
 
       - name: Lint
         run: pnpm -F @aqm/web lint

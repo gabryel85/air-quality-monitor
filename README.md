@@ -1,6 +1,16 @@
 # Air Quality Monitor
 
 [![CI](https://github.com/gabryel85/air-quality-monitor/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gabryel85/air-quality-monitor/actions/workflows/ci.yml)
+![Coverage](https://img.shields.io/badge/coverage-63%25-yellow?logo=vitest&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-47%20passing-brightgreen?logo=vitest&logoColor=white)
+![Node](https://img.shields.io/badge/node-%E2%89%A520-339933?logo=node.js&logoColor=white)
+
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![Redux Toolkit](https://img.shields.io/badge/Redux_Toolkit-RTK_Query-764ABC?logo=redux&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)
+![MSW](https://img.shields.io/badge/MSW-mock_API-FF6A33?logo=mockserviceworker&logoColor=white)
 
 > Frontend recruitment task — air quality measurement dashboard for European cities.
 > Built with React 19 + TypeScript (strict) + Redux Toolkit + RTK Query + Reselect + visx + Tailwind + MSW.

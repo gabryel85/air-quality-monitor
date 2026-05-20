@@ -9,6 +9,7 @@ import tseslint from 'typescript-eslint';
 export default defineConfig([
   globalIgnores([
     'dist',
+    'coverage',
     'storybook-static',
     'public/mockServiceWorker.js',
     'vitest.config.ts',
