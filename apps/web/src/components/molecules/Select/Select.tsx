@@ -60,6 +60,8 @@ const triggerClass = cn(
   'aria-[invalid=true]:border-error aria-[invalid=true]:shadow-[0_0_0_3px_rgba(197,48,48,0.20)]',
 );
 
+const EMPTY_VALUE = '';
+
 export const Select = forwardRef(function Select<T extends string>(
   {
     value,
@@ -84,9 +86,11 @@ export const Select = forwardRef(function Select<T extends string>(
 
   return (
     <RxSelect.Root
-      onValueChange={(v) => onValueChange(v as T)}
+      value={value ?? EMPTY_VALUE}
+      onValueChange={(v) => {
+        if (v !== EMPTY_VALUE) onValueChange(v as T);
+      }}
       disabled={isTriggerDisabled === true}
-      {...(value !== null ? { value } : {})}
       {...(name !== undefined ? { name } : {})}
     >
       <RxSelect.Trigger

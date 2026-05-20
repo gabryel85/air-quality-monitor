@@ -1,5 +1,11 @@
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+
+import { Button } from '@/components/atoms/Button';
+import { Spinner } from '@/components/atoms/Spinner';
+import { ErrorState } from '@/components/molecules/ErrorState';
+import { Modal, ModalBody, ModalFooter } from '@/components/organisms/Modal';
 
 import { EditNoteModal } from './EditNoteModal';
 import { NewNoteModal } from './NewNoteModal';
@@ -42,12 +48,46 @@ interface NoteModalWithFetchProps {
 }
 
 function NoteModalWithFetch({ cityId, noteId, mode, onClose }: NoteModalWithFetchProps) {
-  const { data: note, isLoading, isError } = useGetNoteQuery({ cityId, noteId });
+  const { t } = useTranslation();
+  const { data: note, isLoading, isError, error, refetch } = useGetNoteQuery({ cityId, noteId });
 
-  if (isLoading || isError || !note) {
-    // While the note loads, render nothing — the route can stay; the modal
-    // simply appears once data resolves. Could swap for a spinner overlay.
-    return null;
+  if (isLoading) {
+    return (
+      <Modal
+        open
+        onOpenChange={(next) => {
+          if (!next) onClose();
+        }}
+        title={mode === 'edit' ? t('actions.edit') : t('actions.details')}
+      >
+        <ModalBody>
+          <div className="flex min-h-40 items-center justify-center">
+            <Spinner size="lg" label={t('states.loading')} />
+          </div>
+        </ModalBody>
+      </Modal>
+    );
+  }
+
+  if (isError || !note) {
+    return (
+      <Modal
+        open
+        onOpenChange={(next) => {
+          if (!next) onClose();
+        }}
+        title={mode === 'edit' ? t('actions.edit') : t('actions.details')}
+      >
+        <ModalBody>
+          <ErrorState compact onRetry={() => void refetch()} technicalDetail={error} />
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="secondary" type="button" onClick={onClose}>
+            {t('actions.close')}
+          </Button>
+        </ModalFooter>
+      </Modal>
+    );
   }
 
   if (mode === 'edit') return <EditNoteModal cityId={cityId} note={note} onClose={onClose} />;

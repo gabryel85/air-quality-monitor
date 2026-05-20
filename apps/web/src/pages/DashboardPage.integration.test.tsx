@@ -11,7 +11,7 @@
  * city should disappear from BOTH.
  */
 
-import { waitFor } from '@testing-library/react';
+import { act, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
@@ -56,7 +56,9 @@ describe('DashboardPage — filter state survives refetch', () => {
     const { store, queryAllByText } = await renderDashboardWithSelection();
 
     // 1. Apply filter directly via store (debounce mechanics are unit-tested).
-    store.dispatch(setQ('warsz'));
+    act(() => {
+      store.dispatch(setQ('warsz'));
+    });
 
     // 2. Wait for the page to settle: Warszawa shown, Gdańsk gone (both
     //    tables — DataTable AND BarChart SR alt — react to the same selector).
