@@ -30,7 +30,22 @@
     "matchExact": "Exact",
     "matchStartsWith": "Starts with",
     "searchCountry": "Search country…",
-    "noCountryFound": "No country found"
+    "noCountryFound": "No country found",
+    "pollutionTrend": "Pollution trend",
+    "range24h": "24h",
+    "range7d": "7 days",
+    "range30d": "30 days",
+    "rangeYear": "Year",
+    "historicalYear": "Closed year — historical data, not live-monitored"
+  },
+  "aqi": {
+    "label": "AQI",
+    "good": "Good",
+    "moderate": "Moderate",
+    "unhealthySensitive": "Unhealthy (sensitive)",
+    "unhealthy": "Unhealthy",
+    "veryUnhealthy": "Very unhealthy",
+    "hazardous": "Hazardous"
   },
   "states": {
     "loading": "Loading data…",

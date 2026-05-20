@@ -33,6 +33,6 @@ export const baseQueryWithRetry = retry(baseQueryWithRetryImpl, { maxRetries: 2 
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithRetry,
-  tagTypes: ['Countries', 'Years', 'CitiesStats', 'City', 'Notes'],
+  tagTypes: ['Countries', 'Years', 'CitiesStats', 'City', 'CitySeries', 'Notes'],
   endpoints: () => ({}),
 });

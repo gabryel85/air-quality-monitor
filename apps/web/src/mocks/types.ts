@@ -46,3 +46,38 @@ export interface CreateNoteInput {
 export interface UpdateNoteInput {
   content: string;
 }
+
+// ============================================================
+// City pollutant time-series (Ambee-style history endpoint)
+// ============================================================
+
+export type SeriesRange = '24h' | '7d' | '30d' | 'year';
+
+/** US-EPA-style AQI bands. */
+export type AqiCategory =
+  | 'good'
+  | 'moderate'
+  | 'unhealthySensitive'
+  | 'unhealthy'
+  | 'veryUnhealthy'
+  | 'hazardous';
+
+export interface SeriesPointDto {
+  /** ISO 8601 timestamp of the measurement. */
+  ts: string;
+  /** Pollutant values — null when that sensor failed for this point. */
+  no2: number | null;
+  co: number | null;
+  pm10: number | null;
+  /** Composite Air Quality Index (max of per-pollutant sub-indices). */
+  aqi: number;
+  category: AqiCategory;
+}
+
+export interface CitySeriesDto {
+  cityId: string;
+  city: string;
+  countryId: string;
+  range: SeriesRange;
+  points: SeriesPointDto[];
+}

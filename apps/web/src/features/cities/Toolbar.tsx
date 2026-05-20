@@ -23,12 +23,16 @@ export function Toolbar({ className }: ToolbarProps) {
   const countryId = useAppSelector((s) => s.filters.country);
   const year = useAppSelector((s) => s.filters.year);
 
+  // A past year's annual snapshot cannot change → polling would just re-fetch
+  // identical bytes. Poll ONLY the current year; historical years are static.
+  const isHistorical = year !== null && year < new Date().getFullYear();
+
   // The actual poll hook. Subscribed once at this toolbar level so polling
   // continues regardless of where else the selector reads the data from.
   useGetCitiesStatsQuery(countryId && year !== null ? { countryId, year } : skipToken, {
-    pollingInterval: POLLING_INTERVAL_MS,
+    pollingInterval: isHistorical ? 0 : POLLING_INTERVAL_MS,
     skipPollingIfUnfocused: false,
-    refetchOnFocus: true,
+    refetchOnFocus: !isHistorical,
   });
 
   const lastUpdatedAt = useAppSelector(selectLastUpdatedAt);
@@ -52,7 +56,11 @@ export function Toolbar({ className }: ToolbarProps) {
           <CityFilterInput />
         </Field>
         <div className="ml-auto flex items-center pb-1">
-          <PollingIndicator lastUpdatedAt={lastUpdatedAt} isError={Boolean(error)} />
+          <PollingIndicator
+            lastUpdatedAt={lastUpdatedAt}
+            isError={Boolean(error)}
+            isHistorical={isHistorical}
+          />
         </div>
       </div>
 

@@ -12,6 +12,7 @@
 
 import { delay, http, HttpResponse } from 'msw';
 
+import { generateSeries } from './series';
 import {
   CITIES_BY_COUNTRY,
   COUNTRIES,
@@ -21,13 +22,17 @@ import {
 } from './seed';
 import type {
   CityDto,
+  CitySeriesDto,
   CityStatsDto,
   CountryDto,
   CreateNoteInput,
   NoteDto,
   NotesPageDto,
+  SeriesRange,
   UpdateNoteInput,
 } from './types';
+
+const SERIES_RANGES: ReadonlySet<SeriesRange> = new Set(['24h', '7d', '30d', 'year']);
 
 const NOTES: NoteDto[] = initialNotes();
 let nextNoteId = NOTES.reduce((max, n) => Math.max(max, n.id), 0) + 1;
@@ -131,6 +136,35 @@ export const handlers = [
     const city = findCity(String(params['cityId']));
     if (!city) return HttpResponse.json({ message: 'City not found' }, { status: 404 });
     return HttpResponse.json<CityDto>(city);
+  }),
+
+  /* -----------------------------------------------------------
+   * GET /api/cities/:cityId/series?range=24h|7d|30d|year
+   *
+   * Pollutant time-series, Ambee-history-style. Range governs the
+   * point count + spacing; values follow diurnal/weekly/seasonal
+   * rhythms (see series.ts).
+   * --------------------------------------------------------- */
+  http.get('/api/cities/:cityId/series', async ({ params, request }) => {
+    await delay(randomDelay());
+
+    const cityId = String(params['cityId']);
+    const city = findCity(cityId);
+    if (!city) return HttpResponse.json({ message: 'City not found' }, { status: 404 });
+
+    const rangeRaw = new URL(request.url).searchParams.get('range') ?? '24h';
+    if (!SERIES_RANGES.has(rangeRaw as SeriesRange)) {
+      return HttpResponse.json({ message: 'Invalid range' }, { status: 400 });
+    }
+    const range = rangeRaw as SeriesRange;
+
+    return HttpResponse.json<CitySeriesDto>({
+      cityId: city.cityId,
+      city: city.city,
+      countryId: city.countryId,
+      range,
+      points: generateSeries(cityId, range, Date.now()),
+    });
   }),
 
   /* -----------------------------------------------------------

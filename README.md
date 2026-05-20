@@ -18,6 +18,8 @@ An analyst picks a country and a year, sees a sortable table of measurement stat
 - **URL is the source of truth.** Country, year, filter, sort, and the currently open note modal are all in the URL. Refresh, back/forward, and "send my colleague a link" all just work.
 - **Polling-safe UX.** Filter and sort survive the 20-second poll cycle; loading skeletons only appear on the _first_ fetch (or on country/year change), not on every refetch.
 - **Sensor failures are first-class.** Null measurement values render as `—` with a screen-reader-friendly tooltip; entire-station outages drop rows gracefully. Nulls sort last regardless of direction.
+- **Per-city trend chart.** Clicking a city opens its detail with a pollutant time-series (24h / 7d / 30d / yearly), three toggleable lines (NO₂/CO/PM₁₀) and an AQI badge — this is where the "24h" view is genuinely live.
+- **Historical-year guard.** A past year's annual snapshot can't change, so polling is switched off for it and a "closed year — historical data" indicator replaces the live pulse.
 - **Accessible.** Keyboard nav across the whole app, focus rings on every interactive element, `aria-sort` on table columns, `aria-live` regions for loading/filter changes, full focus trap in modals (Radix), `prefers-reduced-motion` honoured.
 - **Brand-tokens.** ING palette via CSS variables; light + dark + auto theme with no flash on first paint.
 - **Bilingual.** Polish + English via `react-i18next`.
@@ -215,6 +217,28 @@ This caught real issues during development (Radix prop types rejected `undefined
 Conscious decision: `skipPollingIfUnfocused: false`. Defence — this is a **monitoring dashboard for analysts**. They Alt-Tab away to reference docs or Slack, then return; expectation is "the data is current," not "5-minute-old snapshot."
 
 In production with real costs, I'd add a Page Visibility API gate at the 5-minute mark, but for the 20-second cadence here it's the right call.
+
+### 11. What "24H" means — and the historical-year guard
+
+The endpoint is `GET /api/country/{id}/cities/stats/24H`, yet requirement #1 says the table is fed by selecting a **year**. Read naively that's a contradiction ("the last 24 hours of 2023"?).
+
+It resolves once you read `24H` as the **averaging window of the metric**, not "the last 24 hours". EU air-quality law (Directive 2008/50/EC) defines limits on **24-hour mean** PM₁₀/NO₂. So:
+
+- `/cities/stats/24H` → statistics computed over **24-hour averaging windows**
+- `maxNO2 / maxCO / maxPM10` → the **annual maximum** of that 24h mean
+- `?year=YYYY` → which year to take that maximum over
+
+No contradiction: the dashboard is an **annual snapshot** ("the worst 24-hour mean of the year, per city"). `24H` is a unit, not a control.
+
+That also fixes the polling question. A past year's annual max is **frozen** — polling it would re-fetch identical bytes. So polling runs **only for the current year**; selecting a past year switches it off and shows a "closed year — historical data" indicator (`Toolbar.tsx`, `PollingIndicator`).
+
+The genuinely-live "last 24 hours" lives where it belongs — the **per-city trend chart** (`CityTrendChart`), whose `24h` range really is the most recent 24 hours and really does move.
+
+### 12. Mock data shaped after a real API (Ambee), not a real API call
+
+The per-city time-series mock (`mocks/series.ts`) is modelled on the **Ambee Air Quality `history` endpoint**: time-stamped points, per-pollutant values, a composite `AQI`, and an `aqiInfo.category`. Values follow real rhythms — diurnal rush-hour peaks, weekend dips, winter heating-season highs — and are deterministic per `(city, timestamp)` so polling never makes the chart jump.
+
+A real API was considered and rejected for this task: API keys can't ship in a public repo (breaks "clone & run"), no real API matches the PDF's `maxNO2`-per-city-per-year contract (that aggregation is a backend job the brief excludes), and CORS + rate limits + non-determinism would all work against a recruitment reviewer. MSW gives the same realism with none of that.
 
 ---
 

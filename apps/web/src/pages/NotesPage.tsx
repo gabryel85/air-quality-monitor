@@ -6,6 +6,7 @@ import { ChevronLeft, Plus } from 'lucide-react';
 import { Button } from '@/components/atoms/Button';
 import { ErrorState } from '@/components/molecules/ErrorState';
 import { useGetCityQuery } from '@/features/cities/citiesApi';
+import { CityTrendChart } from '@/features/cities/CityTrendChart';
 import { NoteModalRouter } from '@/features/notes/NoteModalRouter';
 import { NotesListInfinite } from '@/features/notes/NotesListInfinite';
 import { cn } from '@/lib/utils';
@@ -71,7 +72,16 @@ export function NotesPage() {
       {isError ? (
         <ErrorState onRetry={() => void refetch()} technicalDetail={error} />
       ) : (
-        <NotesListInfinite cityId={cityId} onOpenDetails={handleOpenDetails} onEdit={handleEdit} />
+        <>
+          {/* Pollutant trend for this city — sits above the notes per spec
+              extension; this is where the 24h range is genuinely live. */}
+          <CityTrendChart cityId={cityId} />
+          <NotesListInfinite
+            cityId={cityId}
+            onOpenDetails={handleOpenDetails}
+            onEdit={handleEdit}
+          />
+        </>
       )}
 
       <NoteModalRouter cityId={cityId} />

@@ -4,6 +4,9 @@
  * Communicates the freshness of the dashboard data:
  *   - Live: pulsing dot + "Live · updated 12s ago"
  *   - Error: red dot + "Refresh failed" + retry button
+ *   - Historical: static grey dot + "Closed year — historical data".
+ *     Used when the selected year is in the past, where polling is off
+ *     because the annual snapshot can no longer change.
  *
  * Renders aria-live="polite" so screen readers learn about freshness
  * without being interrupted mid-task.
@@ -13,7 +16,7 @@
  * (default 5 s — keeps "updated 7s ago" responsive without flooding RAF).
  */
 
-import { RefreshCcw } from 'lucide-react';
+import { Archive, RefreshCcw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -23,6 +26,8 @@ import { formatRelativeTime } from '@/lib/relativeTime';
 export interface PollingIndicatorProps {
   readonly lastUpdatedAt: number | null;
   readonly isError?: boolean;
+  /** Past year selected — polling is off, data is frozen. */
+  readonly isHistorical?: boolean;
   readonly onRetry?: () => void;
   readonly className?: string;
   /** Re-render cadence for relative time display (ms). Default 5000. */
@@ -32,6 +37,7 @@ export interface PollingIndicatorProps {
 export function PollingIndicator({
   lastUpdatedAt,
   isError = false,
+  isHistorical = false,
   onRetry,
   className,
   refreshIntervalMs = 5_000,
@@ -48,6 +54,20 @@ export function PollingIndicator({
 
   const locale = i18n.resolvedLanguage ?? 'en';
   const relative = lastUpdatedAt ? formatRelativeTime(lastUpdatedAt, locale, now) : null;
+
+  // Historical takes precedence over the live/error split.
+  if (isHistorical && !isError) {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className={cn('text-ink-secondary inline-flex items-center gap-2 text-sm', className)}
+      >
+        <Archive className="text-ink-tertiary h-3.5 w-3.5" aria-hidden="true" />
+        <span>{t('labels.historicalYear')}</span>
+      </div>
+    );
+  }
 
   return (
     <div
