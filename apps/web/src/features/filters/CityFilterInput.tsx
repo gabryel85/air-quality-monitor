@@ -1,14 +1,18 @@
 /**
  * CityFilterInput — feature.
  *
- * Search-style input with TWO inline action buttons:
- *   - left: mode-cycle button that flips contains → exact → startsWith
- *     (icon-only, aria-label states the current mode + that clicking
- *      cycles). The mode is global filter state in Redux + URL.
+ * Search-style input with two inline action buttons:
+ *   - left: mode-cycle button (contains → exact → startsWith), icon-only.
  *   - right: clear-X button when the field has content.
  *
- * The input itself owns its local typing buffer (debounced 300ms before
- * committing to Redux) to avoid re-dispatching on every keystroke.
+ * Typing buffer:
+ *   The input keeps a LOCAL value so keystrokes never wait on Redux. After
+ *   the user pauses (DEBOUNCE_MS), the value is committed to the store.
+ *
+ *   External store changes (URL paste, reset) are adopted into the local
+ *   value via the React "adjust state during render" pattern — NOT a key
+ *   remount. A remount would unmount the <input>, drop focus, and stop the
+ *   user mid-word. The whole component stays mounted; only `value` updates.
  */
 
 import { Asterisk, ChevronsRight, Equal, X } from 'lucide-react';
@@ -25,7 +29,8 @@ export interface CityFilterInputProps {
   readonly className?: string;
 }
 
-const DEBOUNCE_MS = 300;
+/** Commit only after the user has paused typing for this long. */
+const DEBOUNCE_MS = 700;
 
 const MODE_ICON: Record<FilterMode, typeof Asterisk> = {
   contains: Asterisk,
@@ -39,90 +44,53 @@ export function CityFilterInput({ className }: CityFilterInputProps) {
   const storeQ = useAppSelector((s) => s.filters.q);
   const mode = useAppSelector((s) => s.filters.mode);
 
+  // Local typing buffer — the input renders THIS, never storeQ directly.
+  const [localValue, setLocalValue] = useState(storeQ);
+
+  // Track the last storeQ we reconciled so we can tell an external change
+  // (URL paste, reset) apart from our own debounced commit echoing back.
+  const [syncedStoreQ, setSyncedStoreQ] = useState(storeQ);
+  if (storeQ !== syncedStoreQ) {
+    setSyncedStoreQ(storeQ);
+    // Adopt external changes; ignore the echo of our own commit (already equal).
+    if (storeQ !== localValue) setLocalValue(storeQ);
+  }
+
+  // Commit the debounced value upstream once typing settles.
+  const debounced = useDebouncedValue(localValue, DEBOUNCE_MS);
+  useEffect(() => {
+    if (debounced !== storeQ) {
+      dispatch(setQ(debounced));
+    }
+    // storeQ intentionally excluded — re-running on storeQ would double-fire.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debounced]);
+
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const hasValue = localValue.length > 0;
+  const ModeIcon = MODE_ICON[mode];
+
   const modeLabels: Record<FilterMode, string> = {
     contains: t('labels.matchContains'),
     exact: t('labels.matchExact'),
     startsWith: t('labels.matchStartsWith'),
   };
+  const modeAriaLabel = `${t('labels.matchMode')}: ${modeLabels[mode]}`;
 
-  return (
-    <CityFilterInputInner
-      key={storeQ}
-      initialValue={storeQ}
-      mode={mode}
-      modeLabels={modeLabels}
-      onCommit={(next) => {
-        if (next !== storeQ) dispatch(setQ(next));
-      }}
-      onCycleMode={() => {
-        const i = FILTER_MODES.indexOf(mode);
-        const nextMode = FILTER_MODES[(i + 1) % FILTER_MODES.length] ?? 'contains';
-        dispatch(setMode(nextMode));
-      }}
-      placeholder={`${t('labels.filter')}…`}
-      ariaLabel={`${t('labels.filter')} ${t('labels.city').toLowerCase()}`}
-      clearLabel={t('actions.clearFilter')}
-      modeAriaLabel={t('labels.matchMode')}
-      {...(className !== undefined ? { className } : {})}
-    />
-  );
-}
+  function cycleMode(): void {
+    const i = FILTER_MODES.indexOf(mode);
+    const next = FILTER_MODES[(i + 1) % FILTER_MODES.length] ?? 'contains';
+    dispatch(setMode(next));
+  }
 
-interface InnerProps {
-  readonly initialValue: string;
-  readonly mode: FilterMode;
-  readonly modeLabels: Record<FilterMode, string>;
-  readonly onCommit: (next: string) => void;
-  readonly onCycleMode: () => void;
-  readonly placeholder?: string;
-  readonly ariaLabel?: string;
-  readonly clearLabel: string;
-  readonly modeAriaLabel: string;
-  readonly className?: string;
-}
-
-function CityFilterInputInner({
-  initialValue,
-  mode,
-  modeLabels,
-  onCommit,
-  onCycleMode,
-  placeholder,
-  ariaLabel,
-  clearLabel,
-  modeAriaLabel,
-  className,
-}: InnerProps) {
-  const [localValue, setLocalValue] = useState<string>(initialValue);
-  const debouncedValue = useDebouncedValue(localValue, DEBOUNCE_MS);
-
-  /* Commit debounced value upstream. Stable ref guards against re-commit
-     after onCommit caused the store to update (no-op feedback). */
-  const lastCommittedRef = useRef<string>(initialValue);
-  useEffect(() => {
-    if (debouncedValue !== lastCommittedRef.current) {
-      lastCommittedRef.current = debouncedValue;
-      onCommit(debouncedValue);
-    }
-  }, [debouncedValue, onCommit]);
-
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const hasValue = localValue.length > 0;
-  const ModeIcon = MODE_ICON[mode];
-  const currentModeLabel = modeLabels[mode];
-
-  function handleClear(): void {
+  function clear(): void {
     setLocalValue('');
     inputRef.current?.focus();
   }
 
   return (
     <div className={cn('relative inline-flex w-full', className)}>
-      <ModeButton
-        modeAriaLabel={modeAriaLabel}
-        currentModeLabel={currentModeLabel}
-        onClick={onCycleMode}
-      >
+      <ModeButton ariaLabel={modeAriaLabel} onClick={cycleMode}>
         <ModeIcon className="h-4 w-4" aria-hidden="true" />
       </ModeButton>
 
@@ -134,16 +102,15 @@ function CityFilterInputInner({
         onChange={(e) => {
           setLocalValue(e.target.value);
         }}
-        placeholder={placeholder}
-        aria-label={ariaLabel}
+        placeholder={`${t('labels.filter')}…`}
+        aria-label={`${t('labels.filter')} ${t('labels.city').toLowerCase()}`}
         className={cn(
-          'border-border bg-surface block w-full rounded-md border',
-          'h-10 py-2 pl-10 pr-9',
+          'border-border bg-surface block h-10 w-full rounded-md border',
+          'py-2 pl-10 pr-9',
           'text-ink-primary placeholder:text-ink-tertiary text-base',
           'duration-fast transition-colors ease-out',
           'hover:border-border-strong',
           'focus:border-border-focus focus:shadow-focus focus:outline-none',
-          /* Hide the native search ::-webkit-search-cancel-button; we render our own X. */
           '[&::-webkit-search-cancel-button]:appearance-none',
         )}
       />
@@ -151,12 +118,12 @@ function CityFilterInputInner({
       {hasValue ? (
         <button
           type="button"
-          onClick={handleClear}
-          aria-label={clearLabel}
+          onClick={clear}
+          aria-label={t('actions.clearFilter')}
           className={cn(
-            'absolute inset-y-0 right-2 inline-flex items-center justify-center',
-            'text-ink-tertiary hover:text-ink-primary h-full px-1',
-            'focus-visible:shadow-focus rounded-md focus-visible:outline-none',
+            'absolute inset-y-0 right-2 inline-flex h-full items-center justify-center rounded-md px-1',
+            'text-ink-tertiary hover:text-ink-primary',
+            'focus-visible:shadow-focus focus-visible:outline-none',
           )}
         >
           <X className="h-4 w-4" aria-hidden="true" />
@@ -167,13 +134,11 @@ function CityFilterInputInner({
 }
 
 function ModeButton({
-  modeAriaLabel,
-  currentModeLabel,
+  ariaLabel,
   onClick,
   children,
 }: {
-  readonly modeAriaLabel: string;
-  readonly currentModeLabel: string;
+  readonly ariaLabel: string;
   readonly onClick: () => void;
   readonly children: ReactNode;
 }) {
@@ -181,12 +146,11 @@ function ModeButton({
     <button
       type="button"
       onClick={onClick}
-      aria-label={`${modeAriaLabel}: ${currentModeLabel}`}
-      title={`${modeAriaLabel}: ${currentModeLabel}`}
+      aria-label={ariaLabel}
+      title={ariaLabel}
       className={cn(
-        'absolute inset-y-0 left-1.5 inline-flex h-full w-7 items-center justify-center',
-        'text-ink-secondary hover:text-ink-primary hover:bg-subtle',
-        'rounded-md',
+        'absolute inset-y-0 left-1.5 inline-flex h-full w-7 items-center justify-center rounded-md',
+        'text-ink-secondary hover:bg-subtle hover:text-ink-primary',
         'focus-visible:shadow-focus focus-visible:outline-none',
       )}
     >
