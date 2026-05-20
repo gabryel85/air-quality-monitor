@@ -7,19 +7,14 @@
  *   - Deterministic 10% per measurement value is null (sensor failure)
  *   - Deterministic 10% of rows omitted (station failure)
  *
- * State: notes are mutated in-memory; reload resets.
+ * State: notes persist in IndexedDB (see notesDb.ts); reload keeps them.
  */
 
 import { delay, http, HttpResponse } from 'msw';
 
+import { createNote, getNote, listNotes, updateNote } from './notesDb';
 import { generateSeries } from './series';
-import {
-  CITIES_BY_COUNTRY,
-  COUNTRIES,
-  getBaseValues,
-  initialNotes,
-  YEARS_BY_COUNTRY,
-} from './seed';
+import { CITIES_BY_COUNTRY, COUNTRIES, getBaseValues, YEARS_BY_COUNTRY } from './seed';
 import type {
   CityDto,
   CitySeriesDto,
@@ -33,9 +28,6 @@ import type {
 } from './types';
 
 const SERIES_RANGES: ReadonlySet<SeriesRange> = new Set(['24h', '7d', '30d', 'year']);
-
-const NOTES: NoteDto[] = initialNotes();
-let nextNoteId = NOTES.reduce((max, n) => Math.max(max, n.id), 0) + 1;
 
 const NULL_RATE = 0.1;
 const ROW_OMISSION_RATE = 0.1;
@@ -64,10 +56,6 @@ function findCity(cityId: string): CityDto | undefined {
     if (found) return found;
   }
   return undefined;
-}
-
-function compareNotesDescByCreated(a: NoteDto, b: NoteDto): number {
-  return b.createdAt.localeCompare(a.createdAt);
 }
 
 export const handlers = [
@@ -187,14 +175,14 @@ export const handlers = [
   /* -----------------------------------------------------------
    * GET /api/cities/:cityId/notes?cursor=...
    * Cursor-based pagination (cursor = stringified ISO date of the
-   * last item from the previous page).
+   * last item from the previous page). Backed by IndexedDB.
    * --------------------------------------------------------- */
   http.get('/api/cities/:cityId/notes', async ({ params, request }) => {
     await delay('real');
     const cityId = String(params['cityId']);
     const cursor = new URL(request.url).searchParams.get('cursor');
 
-    const all = NOTES.filter((n) => n.cityId === cityId).sort(compareNotesDescByCreated);
+    const all = await listNotes(cityId); // already sorted newest-first
     const startIndex = cursor ? all.findIndex((n) => n.createdAt < cursor) : 0;
     const slice = startIndex === -1 ? [] : all.slice(startIndex, startIndex + NOTES_PAGE_SIZE);
     const next = slice.length === NOTES_PAGE_SIZE ? (slice.at(-1)?.createdAt ?? null) : null;
@@ -207,8 +195,7 @@ export const handlers = [
    * --------------------------------------------------------- */
   http.get('/api/cities/:cityId/notes/:noteId', async ({ params }) => {
     await delay('real');
-    const noteId = Number(params['noteId']);
-    const note = NOTES.find((n) => n.id === noteId && n.cityId === params['cityId']);
+    const note = await getNote(String(params['cityId']), Number(params['noteId']));
     if (!note) return HttpResponse.json({ message: 'Note not found' }, { status: 404 });
     return HttpResponse.json<NoteDto>(note);
   }),
@@ -232,16 +219,7 @@ export const handlers = [
       return HttpResponse.json({ message: 'Content required' }, { status: 400 });
     }
 
-    const now = new Date().toISOString();
-    const note: NoteDto = {
-      id: nextNoteId++,
-      cityId,
-      title: body.title.trim(),
-      content: body.content.trim(),
-      createdAt: now,
-      updatedAt: now,
-    };
-    NOTES.push(note);
+    const note = await createNote(cityId, body);
     return HttpResponse.json<NoteDto>(note, { status: 201 });
   }),
 
@@ -252,18 +230,14 @@ export const handlers = [
   http.patch('/api/cities/:cityId/notes/:noteId', async ({ params, request }) => {
     await delay(randomDelay());
 
-    const noteId = Number(params['noteId']);
-    const note = NOTES.find((n) => n.id === noteId && n.cityId === params['cityId']);
-    if (!note) return HttpResponse.json({ message: 'Note not found' }, { status: 404 });
-
     const body = (await request.json()) as UpdateNoteInput;
     if (!body.content || body.content.trim().length < 1) {
       return HttpResponse.json({ message: 'Content required' }, { status: 400 });
     }
 
-    note.content = body.content.trim();
-    note.updatedAt = new Date().toISOString();
-    return HttpResponse.json<NoteDto>(note);
+    const updated = await updateNote(String(params['cityId']), Number(params['noteId']), body);
+    if (!updated) return HttpResponse.json({ message: 'Note not found' }, { status: 404 });
+    return HttpResponse.json<NoteDto>(updated);
   }),
 ];
 

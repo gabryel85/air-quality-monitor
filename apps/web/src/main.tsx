@@ -14,17 +14,31 @@ import { createRoot } from 'react-dom/client';
 
 import { App } from './app/App';
 
+/** Minimum time the boot splash stays visible — avoids a jarring flash. */
+const MIN_SPLASH_MS = 700;
+
 /**
  * Boot sequence:
  *   1. Start MSW worker (no real backend yet — every /api/* is mocked).
- *   2. Mount React.
+ *   2. Seed the IndexedDB notes store on first visit (notesDb.ensureSeeded).
+ *   3. Mount React — this replaces the boot splash declared in index.html.
  *
  * Mocks run in BOTH dev and production builds. The PDF doesn't require a real
  * backend and Vercel deploys MSW happily — see DESIGN_TOKENS.md and README.
  */
 async function bootstrap(): Promise<void> {
-  const { enableMocks } = await import('./mocks/browser');
-  await enableMocks();
+  const startedAt = performance.now();
+
+  const [{ enableMocks }, { ensureSeeded }] = await Promise.all([
+    import('./mocks/browser'),
+    import('./mocks/notesDb'),
+  ]);
+  await Promise.all([enableMocks(), ensureSeeded()]);
+
+  const elapsed = performance.now() - startedAt;
+  if (elapsed < MIN_SPLASH_MS) {
+    await new Promise((resolve) => setTimeout(resolve, MIN_SPLASH_MS - elapsed));
+  }
 
   const root = document.getElementById('root');
   if (!root) throw new Error('Root element #root not found');
